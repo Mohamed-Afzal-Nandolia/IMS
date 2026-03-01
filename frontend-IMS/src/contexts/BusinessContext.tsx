@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 interface Business {
   id: string;
@@ -27,8 +28,18 @@ const BusinessContext = createContext<BusinessContextType>({
 });
 
 export function BusinessProvider({ children }: { children: ReactNode }) {
+  const { businessId } = useAuth();
   const [currentBusiness, setCurrentBusiness] = useState<Business | null>(null);
   const [businesses, setBusinesses] = useState<Business[]>([]);
+
+  useEffect(() => {
+      if (businessId) {
+          // Dummy business info for now, as it's extracted implicitly in backend APIs
+          setCurrentBusiness({ id: businessId, name: 'My Business' });
+      } else {
+          setCurrentBusiness(null);
+      }
+  }, [businessId]);
 
   const handleSetBusiness = useCallback((business: Business | null) => {
     setCurrentBusiness(business);

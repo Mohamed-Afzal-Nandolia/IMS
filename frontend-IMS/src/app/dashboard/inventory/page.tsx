@@ -12,10 +12,10 @@ export default function InventoryPage() {
   const { data, isLoading } = useProducts({ pageSize: 200 });
   const products = data?.products || [];
 
-  const totalStock = products.reduce((s, p) => s + p.current_stock, 0);
-  const totalValue = products.reduce((s, p) => s + p.current_stock * p.purchase_price, 0);
-  const lowStock = products.filter((p) => p.current_stock > 0 && p.current_stock < (p.min_stock_level || 20));
-  const outOfStock = products.filter((p) => p.current_stock === 0);
+  const totalStock = products.reduce((s, p) => s + (p.current_stock || p.currentStock || 0), 0);
+  const totalValue = products.reduce((s, p) => s + (p.current_stock || p.currentStock || 0) * (p.purchase_price || p.purchasePrice || 0), 0);
+  const lowStock = products.filter((p) => (p.current_stock || p.currentStock || 0) > 0 && (p.current_stock || p.currentStock || 0) < (p.min_stock_level || p.minStockLevel || 20));
+  const outOfStock = products.filter((p) => (p.current_stock || p.currentStock || 0) === 0);
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
@@ -58,8 +58,8 @@ export default function InventoryPage() {
                     <tr key={p.id} className="border-b border-amber-50 dark:border-amber-900/20">
                       <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">{p.name}</td>
                       <td className="px-5 py-3 text-gray-500 font-mono text-xs">{p.sku}</td>
-                      <td className="px-5 py-3 text-center font-bold text-amber-600">{p.current_stock} {p.unit}</td>
-                      <td className="px-5 py-3 text-center text-gray-500">{p.min_stock_level} {p.unit}</td>
+                      <td className="px-5 py-3 text-center font-bold text-amber-600">{(p.current_stock || p.currentStock || 0)} {p.unit}</td>
+                      <td className="px-5 py-3 text-center text-gray-500">{(p.min_stock_level || p.minStockLevel || 0)} {p.unit}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -96,8 +96,8 @@ export default function InventoryPage() {
                   <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/50">
                     <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">{p.name}</td>
                     <td className="px-5 py-3 text-gray-500">{p.sku}</td>
-                    <td className="px-5 py-3 text-center font-semibold">{p.current_stock} {p.unit}</td>
-                    <td className="px-5 py-3 text-right">{formatCurrency(p.current_stock * p.purchase_price)}</td>
+                    <td className="px-5 py-3 text-center font-semibold">{(p.current_stock || p.currentStock || 0)} {p.unit}</td>
+                    <td className="px-5 py-3 text-right">{formatCurrency((p.current_stock || p.currentStock || 0) * (p.purchase_price || p.purchasePrice || 0))}</td>
                   </tr>
                 ))}
               </tbody>

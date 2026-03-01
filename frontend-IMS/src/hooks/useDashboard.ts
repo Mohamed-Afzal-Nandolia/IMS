@@ -1,64 +1,47 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { insforge } from '@/lib/insforge';
+import api from '@/lib/api';
 
 export function useDashboardStats() {
     return useQuery({
         queryKey: ['dashboard', 'stats'],
         queryFn: async () => {
-            const [salesRes, purchasesRes, productsRes, partiesRes, lowStockRes, recentInvoicesRes] =
-                await Promise.all([
-                    // Total sales
-                    insforge.database
-                        .from('invoices')
-                        .select('total_amount', { count: 'exact' })
-                        .eq('type', 'sale'),
-                    // Total purchases
-                    insforge.database
-                        .from('invoices')
-                        .select('total_amount', { count: 'exact' })
-                        .eq('type', 'purchase'),
-                    // Products count
-                    insforge.database
-                        .from('products')
-                        .select('id', { count: 'exact' }),
-                    // Parties count
-                    insforge.database
-                        .from('parties')
-                        .select('id', { count: 'exact' }),
-                    // Low stock items
-                    insforge.database
-                        .from('products')
-                        .select('id, name, current_stock, min_stock_level, unit')
-                        .lt('current_stock', 20)
-                        .order('current_stock', { ascending: true })
-                        .limit(10),
-                    // Recent invoices
-                    insforge.database
-                        .from('invoices')
-                        .select('*, party:parties(id, name)')
-                        .order('created_at', { ascending: false })
-                        .limit(5),
-                ]);
+            // Concurrent API calls to our backend endpoints
+            const [salesRes, purchasesRes, productsRes, partiesRes] = await Promise.all([
+                api.get('/invoices', { params: { type: 'sale' } }),
+                api.get('/invoices', { params: { type: 'purchase' } }),
+                api.get('/products'),
+                api.get('/parties')
+            ]);
 
-            const totalSales = (salesRes.data || []).reduce(
-                (sum: number, inv: any) => sum + (inv.total_amount || 0), 0
-            );
-            const totalPurchases = (purchasesRes.data || []).reduce(
-                (sum: number, inv: any) => sum + (inv.total_amount || 0), 0
-            );
+            const sales = Array.isArray(salesRes.data) ? salesRes.data : [];
+            const purchases = Array.isArray(purchasesRes.data) ? purchasesRes.data : [];
+            const products = Array.isArray(productsRes.data) ? productsRes.data : [];
+            const parties = Array.isArray(partiesRes.data) ? partiesRes.data : [];
+
+            const totalSales = sales.reduce((sum: number, inv: any) => sum + (inv.totalAmount || inv.total_amount || 0), 0);
+            const totalPurchases = purchases.reduce((sum: number, inv: any) => sum + (inv.totalAmount || inv.total_amount || 0), 0);
+
+            const lowStockItems = products
+                .filter((p: any) => p.currentStock > 0 && p.currentStock < 20)
+                .sort((a: any, b: any) => a.currentStock - b.currentStock)
+                .slice(0, 10);
+
+            const recentInvoices = [...sales, ...purchases]
+                .sort((a: any, b: any) => new Date(b.createdAt || b.created_at).getTime() - new Date(a.createdAt || a.created_at).getTime())
+                .slice(0, 5);
 
             return {
                 totalSales,
                 totalPurchases,
                 netProfit: totalSales - totalPurchases,
-                salesCount: salesRes.count || 0,
-                purchasesCount: purchasesRes.count || 0,
-                totalProducts: productsRes.count || 0,
-                totalParties: partiesRes.count || 0,
-                lowStockItems: (lowStockRes.data || []) as any[],
-                recentInvoices: (recentInvoicesRes.data || []) as any[],
+                salesCount: sales.length,
+                purchasesCount: purchases.length,
+                totalProducts: products.length,
+                totalParties: parties.length,
+                lowStockItems,
+                recentInvoices,
             };
         },
         refetchInterval: 30000, // Refresh every 30s

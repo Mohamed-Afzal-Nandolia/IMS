@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { insforge } from '@/lib/insforge';
+import api from '@/lib/api';
 
 export interface Party {
     id: string;
@@ -44,39 +44,30 @@ interface UsePartiesOptions {
     pageSize?: number;
 }
 
-async function getBusinessId(): Promise<string> {
-    const cached = typeof window !== 'undefined' ? localStorage.getItem('ims_business_id') : null;
-    if (cached) return cached;
-    const { data } = await insforge.database.from('businesses').select('id').limit(1).single();
-    const id = data?.id || '';
-    if (id && typeof window !== 'undefined') localStorage.setItem('ims_business_id', id);
-    return id;
-}
-
 export function useParties(options: UsePartiesOptions = {}) {
     const { search = '', type = 'all', page = 1, pageSize = 20 } = options;
 
     return useQuery({
         queryKey: ['parties', search, type, page, pageSize],
         queryFn: async () => {
-            let query = insforge.database
-                .from('parties')
-                .select('*', { count: 'exact' });
+            // Because the backend returns all parties and supports basic ?type= filter
+            const { data } = await api.get<Party[]>('/parties', {
+                params: type !== 'all' ? { type } : undefined
+            });
+
+            let filtered = Array.isArray(data) ? data : [];
 
             if (search) {
-                query = query.ilike('name', `%${search}%`);
-            }
-            if (type !== 'all') {
-                query = query.eq('type', type);
+                const searchLower = search.toLowerCase();
+                filtered = filtered.filter(p => p.name.toLowerCase().includes(searchLower));
             }
 
+            const total = filtered.length;
             const from = (page - 1) * pageSize;
-            const to = from + pageSize - 1;
-            query = query.order('created_at', { ascending: false }).range(from, to);
+            const to = from + pageSize;
+            const paginated = filtered.slice(from, to);
 
-            const { data, error, count } = await query;
-            if (error) throw error;
-            return { parties: (data || []) as Party[], total: count || 0 };
+            return { parties: paginated, total };
         },
     });
 }
@@ -85,12 +76,7 @@ export function useCreateParty() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (party: PartyFormData) => {
-            const business_id = await getBusinessId();
-            const { data, error } = await insforge.database
-                .from('parties')
-                .insert({ ...party, business_id })
-                .select();
-            if (error) throw error;
+            const { data } = await api.post<Party>('/parties', party);
             return data;
         },
         onSuccess: () => {
@@ -104,12 +90,7 @@ export function useUpdateParty() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async ({ id, ...values }: PartyFormData & { id: string }) => {
-            const { data, error } = await insforge.database
-                .from('parties')
-                .update(values)
-                .eq('id', id)
-                .select();
-            if (error) throw error;
+            const { data } = await api.patch<Party>(`/parties/${id}`, values);
             return data;
         },
         onSuccess: () => {
@@ -123,11 +104,7 @@ export function useDeleteParty() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await insforge.database
-                .from('parties')
-                .delete()
-                .eq('id', id);
-            if (error) throw error;
+            await api.delete(`/parties/${id}`);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['parties'] });

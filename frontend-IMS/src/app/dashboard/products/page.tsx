@@ -10,6 +10,7 @@ import {
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, type Product, type ProductFormData } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useToast } from '@/components/ui/Toast';
+import { Portal } from '@/components/ui/Portal';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } };
@@ -139,8 +140,8 @@ export default function ProductsPage() {
                     <td className="px-5 py-3 text-gray-500 dark:text-gray-400">{p.category?.name || '—'}</td>
                     <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">{formatCurrency(p.selling_price)}</td>
                     <td className="px-5 py-3 text-center text-gray-500">{p.gst_rate}%</td>
-                    <td className="px-5 py-3 text-center font-semibold text-gray-900 dark:text-white">{p.current_stock}</td>
-                    <td className="px-5 py-3 text-center">{stockBadge(p.current_stock)}</td>
+                    <td className="px-5 py-3 text-center font-semibold text-gray-900 dark:text-white">{p.current_stock || p.currentStock || 0}</td>
+                    <td className="px-5 py-3 text-center">{stockBadge(p.current_stock || p.currentStock || 0)}</td>
                     <td className="px-5 py-3">
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={() => setViewProduct(p)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-indigo-600"><LuEye className="w-4 h-4" /></button>
@@ -169,8 +170,9 @@ export default function ProductsPage() {
       </motion.div>
 
       {/* View Modal */}
-      <AnimatePresence>
-        {viewProduct && (
+      <Portal>
+        <AnimatePresence>
+          {viewProduct && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setViewProduct(null)}>
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[80vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
@@ -182,7 +184,7 @@ export default function ProductsPage() {
                   ['Name', viewProduct.name], ['SKU', viewProduct.sku], ['HSN Code', viewProduct.hsn_code],
                   ['Category', viewProduct.category?.name || '—'], ['Unit', viewProduct.unit],
                   ['Sale Price', formatCurrency(viewProduct.selling_price)], ['Purchase Price', formatCurrency(viewProduct.purchase_price)],
-                  ['GST Rate', `${viewProduct.gst_rate}%`], ['Stock', `${viewProduct.current_stock} ${viewProduct.unit}`],
+                  ['GST Rate', `${viewProduct.gst_rate}%`], ['Stock', `${viewProduct.current_stock || viewProduct.currentStock || 0} ${viewProduct.unit}`],
                   ['Min Stock', `${viewProduct.min_stock_level} ${viewProduct.unit}`], ['Description', viewProduct.description || '—'],
                 ].map(([label, value]) => (
                   <div key={label} className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700/50">
@@ -192,13 +194,15 @@ export default function ProductsPage() {
                 ))}
               </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Portal>
 
       {/* Delete Confirmation */}
-      <AnimatePresence>
-        {deleteConfirm && (
+      <Portal>
+        <AnimatePresence>
+          {deleteConfirm && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-6 text-center">
               <LuTrash2 className="w-12 h-12 mx-auto text-red-500 mb-3" />
@@ -211,13 +215,15 @@ export default function ProductsPage() {
                 </button>
               </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Portal>
 
       {/* Add/Edit Modal */}
-      <AnimatePresence>
-        {showModal && (
+      <Portal>
+        <AnimatePresence>
+          {showModal && (
           <ProductFormModal
             product={editingProduct}
             categories={categories || []}
@@ -226,7 +232,8 @@ export default function ProductsPage() {
             onClose={() => { setShowModal(false); setEditingProduct(null); }}
           />
         )}
-      </AnimatePresence>
+        </AnimatePresence>
+      </Portal>
     </motion.div>
   );
 }

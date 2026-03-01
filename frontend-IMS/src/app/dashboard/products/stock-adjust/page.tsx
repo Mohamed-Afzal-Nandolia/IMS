@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { formatCurrency } from '@/lib/utils';
 import { LuPackage, LuLoader, LuSearch, LuPlus, LuMinus } from 'react-icons/lu';
 import { useProducts } from '@/hooks/useProducts';
-import { insforge } from '@/lib/insforge';
+import api from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -27,13 +26,14 @@ export default function StockAdjustPage() {
       setSaving(true);
       const newStock = currentStock + adjustment;
       if (newStock < 0) { addToast({ type: 'warning', title: 'Cannot go below 0' }); return; }
-      await insforge.database.from('products').update({ current_stock: newStock }).eq('id', productId);
-      const businessId = localStorage.getItem('ims_business_id') || '';
-      await insforge.database.from('stock_adjustments').insert({
-        business_id: businessId,
-        product_id: productId, type: adjustment > 0 ? 'increase' : 'decrease',
-        quantity: Math.abs(adjustment), reason: 'Manual adjustment',
+      
+      await api.post('/stock-adjustments', {
+        product: { id: productId },
+        type: adjustment > 0 ? 'increase' : 'decrease',
+        quantity: Math.abs(adjustment),
+        reason: 'Manual adjustment',
       });
+      
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setAdjustments((prev) => ({ ...prev, [productId]: 0 }));
       addToast({ type: 'success', title: 'Stock Updated', message: `New stock: ${newStock}` });
@@ -63,14 +63,14 @@ export default function StockAdjustPage() {
                 <tr key={p.id} className="border-b border-gray-50 dark:border-gray-800">
                   <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">{p.name}</td>
                   <td className="px-5 py-3 text-gray-500 font-mono text-xs">{p.sku}</td>
-                  <td className="px-5 py-3 text-center font-semibold">{p.current_stock} {p.unit}</td>
+                  <td className="px-5 py-3 text-center font-semibold">{p.current_stock || p.currentStock} {p.unit}</td>
                   <td className="px-5 py-3"><div className="flex items-center justify-center gap-2">
                     <button onClick={() => setAdjustments((prev) => ({ ...prev, [p.id]: (prev[p.id] || 0) - 1 }))} className="p-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-100"><LuMinus className="w-4 h-4" /></button>
                     <input type="number" value={adjustments[p.id] || 0} onChange={(e) => setAdjustments((prev) => ({ ...prev, [p.id]: Number(e.target.value) }))} className="w-16 text-center px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm" />
                     <button onClick={() => setAdjustments((prev) => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))} className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-100"><LuPlus className="w-4 h-4" /></button>
                   </div></td>
                   <td className="px-5 py-3 text-center">
-                    <button disabled={!adjustments[p.id] || saving} onClick={() => handleAdjust(p.id, p.current_stock, adjustments[p.id] || 0)} className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold disabled:opacity-30 hover:bg-indigo-700">Apply</button>
+                    <button disabled={!adjustments[p.id] || saving} onClick={() => handleAdjust(p.id, p.current_stock || p.currentStock || 0, adjustments[p.id] || 0)} className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold disabled:opacity-30 hover:bg-indigo-700">Apply</button>
                   </td>
                 </tr>
               ))}

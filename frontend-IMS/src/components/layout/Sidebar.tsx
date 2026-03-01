@@ -23,7 +23,8 @@ import {
   LuBell,
   LuBox,
 } from 'react-icons/lu';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { Portal } from '@/components/ui/Portal';
 
 interface NavItem {
   label: string;
@@ -85,9 +86,25 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [hoveredNav, setHoveredNav] = useState<{ label: string; top: number } | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout>();
 
   const toggleExpand = (label: string) => {
     setExpanded((prev) => (prev === label ? null : label));
+  };
+
+  const handleMouseEnter = (item: NavItem, e: React.MouseEvent) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    if (collapsed) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setHoveredNav({ label: item.label, top: rect.top });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredNav(null);
+    }, 150);
   };
 
   return (
@@ -135,7 +152,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           const hasChildren = !!item.children;
 
           return (
-            <div key={item.label}>
+            <div 
+              key={item.label}
+              onMouseEnter={(e) => handleMouseEnter(item, e)}
+              onMouseLeave={handleMouseLeave}
+            >
               {hasChildren ? (
                 <button
                   onClick={() => !collapsed && toggleExpand(item.label)}
@@ -237,6 +258,69 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           );
         })}
       </nav>
+
+      {/* Collapsed Tooltip / Menu Popup */}
+      <AnimatePresence>
+        {collapsed && hoveredNav && (
+          <Portal>
+            <div
+              className="fixed z-[110]"
+              style={{ top: hoveredNav.top, left: 72 + 8 }}
+              onMouseEnter={() => {
+                if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+              }}
+              onMouseLeave={handleMouseLeave}
+            >
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.15 }}
+                className={cn(
+                  'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl overflow-hidden',
+                  navItems.find((i) => i.label === hoveredNav.label)?.children ? 'w-48 py-2' : 'px-3 py-2'
+                )}
+              >
+                {(() => {
+                  const hoveredItem = navItems.find((i) => i.label === hoveredNav.label);
+                  if (!hoveredItem) return null;
+                  
+                  if (hoveredItem.children) {
+                    return (
+                      <div className="flex flex-col">
+                        <div className="px-4 py-1.5 mb-1 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider border-b border-gray-100 dark:border-gray-800">
+                          {hoveredItem.label}
+                        </div>
+                        {hoveredItem.children.map((child) => (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            onClick={() => setHoveredNav(null)}
+                            className={cn(
+                              'block px-4 py-2 text-sm transition-colors',
+                              pathname === child.href
+                                ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 dark:text-indigo-400 font-medium'
+                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
+                            )}
+                          >
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 block">
+                      {hoveredItem.label}
+                    </span>
+                  );
+                })()}
+              </motion.div>
+            </div>
+          </Portal>
+        )}
+      </AnimatePresence>
 
       {/* Collapse toggle */}
       <div className="p-3 border-t border-gray-200 dark:border-gray-800">

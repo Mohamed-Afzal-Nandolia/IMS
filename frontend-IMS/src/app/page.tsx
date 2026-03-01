@@ -1,7 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { SignInButton, SignUpButton, SignedIn, SignedOut } from '@insforge/nextjs';
+import { SignedIn, SignedOut } from '@/components/auth/AuthComponents';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   LuBox,
@@ -40,16 +41,16 @@ export default function LandingPage() {
         </div>
         <div className="flex items-center gap-3">
           <SignedOut>
-            <SignInButton>
+            <Link href="/login">
               <button className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 transition-colors">
                 Sign In
               </button>
-            </SignInButton>
-            <SignUpButton>
+            </Link>
+            <Link href="/login?tab=register">
               <button className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all">
                 Get Started Free
               </button>
-            </SignUpButton>
+            </Link>
           </SignedOut>
           <SignedIn>
             <button
@@ -86,11 +87,11 @@ export default function LandingPage() {
           </p>
           <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
             <SignedOut>
-              <SignUpButton>
+              <Link href="/login?tab=register">
                 <button className="px-8 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl hover:shadow-xl hover:shadow-indigo-500/30 transition-all flex items-center gap-2">
                   Start Free Trial <LuArrowRight className="w-5 h-5" />
                 </button>
-              </SignUpButton>
+              </Link>
             </SignedOut>
             <SignedIn>
               <button

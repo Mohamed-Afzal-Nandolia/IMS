@@ -36,7 +36,7 @@ export default function ReportsPage() {
 
   const totalSales = sales.reduce((s, i) => s + (i.total_amount || 0), 0);
   const totalPurchases = purchases.reduce((s, i) => s + (i.total_amount || 0), 0);
-  const lowStock = products.filter((p) => p.current_stock > 0 && p.current_stock < 20);
+  const lowStock = products.filter((p) => (p.current_stock || p.currentStock || 0) > 0 && (p.current_stock || p.currentStock || 0) < 20);
 
   const reports = [
     { title: 'Sales Summary', desc: `${sales.length} invoices`, value: formatCurrency(totalSales), icon: LuTrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },

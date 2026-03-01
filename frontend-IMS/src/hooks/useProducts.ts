@@ -1,11 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { insforge } from '@/lib/insforge';
-
-// DB columns: name, sku, hsn_code, sac_code, description, unit, purchase_price, selling_price, mrp,
-//             gst_rate, cess_rate, opening_stock, current_stock, min_stock_level,
-//             batch_tracking, expiry_tracking, image_url, is_active, category_id, business_id
+import api from '@/lib/api';
 
 export interface Product {
     id: string;
@@ -17,17 +13,25 @@ export interface Product {
     category_id: string | null;
     unit: string;
     selling_price: number;
+    sellingPrice?: number;
     purchase_price: number;
+    purchasePrice?: number;
     mrp: number;
     gst_rate: number;
     cess_rate: number;
-    current_stock: number;
-    opening_stock: number;
-    min_stock_level: number;
+    current_stock?: number;
+    currentStock?: number;
+    opening_stock?: number;
+    openingStock?: number;
+    min_stock_level?: number;
+    minStockLevel?: number;
     description: string;
-    is_active: boolean;
-    created_at: string;
-    updated_at: string;
+    is_active?: boolean;
+    isActive?: boolean;
+    created_at?: string;
+    createdAt?: string;
+    updated_at?: string;
+    updatedAt?: string;
     category?: { id: string; name: string } | null;
 }
 
@@ -44,6 +48,7 @@ export interface ProductFormData {
     min_stock_level?: number;
     description?: string;
     is_active?: boolean;
+    category?: { id: string } | null;
 }
 
 interface UseProductsOptions {
@@ -54,46 +59,36 @@ interface UseProductsOptions {
     pageSize?: number;
 }
 
-async function getBusinessId(): Promise<string> {
-    const cached = typeof window !== 'undefined' ? localStorage.getItem('ims_business_id') : null;
-    if (cached) return cached;
-    const { data } = await insforge.database.from('businesses').select('id').limit(1).single();
-    const id = data?.id || '';
-    if (id && typeof window !== 'undefined') localStorage.setItem('ims_business_id', id);
-    return id;
-}
-
 export function useProducts(options: UseProductsOptions = {}) {
     const { search = '', category = '', stockFilter = 'all', page = 1, pageSize = 20 } = options;
 
     return useQuery({
         queryKey: ['products', search, category, stockFilter, page, pageSize],
         queryFn: async () => {
-            let query = insforge.database
-                .from('products')
-                .select('*, category:categories(id, name)', { count: 'exact' });
+            const { data } = await api.get<Product[]>('/products');
+            let filtered = Array.isArray(data) ? data : [];
 
             if (search) {
-                query = query.ilike('name', `%${search}%`);
+                const searchLower = search.toLowerCase();
+                filtered = filtered.filter(p => p.name.toLowerCase().includes(searchLower));
             }
             if (category) {
-                query = query.eq('category_id', category);
+                filtered = filtered.filter(p => p.category?.id === category);
             }
             if (stockFilter === 'low_stock') {
-                query = query.gt('current_stock', 0).lt('current_stock', 20);
+                filtered = filtered.filter(p => (p.current_stock || p.currentStock || 0) > 0 && (p.current_stock || p.currentStock || 0) < 20);
             } else if (stockFilter === 'in_stock') {
-                query = query.gt('current_stock', 0);
+                filtered = filtered.filter(p => (p.current_stock || p.currentStock || 0) > 0);
             } else if (stockFilter === 'out_of_stock') {
-                query = query.eq('current_stock', 0);
+                filtered = filtered.filter(p => (p.current_stock || p.currentStock || 0) <= 0);
             }
 
+            const total = filtered.length;
             const from = (page - 1) * pageSize;
-            const to = from + pageSize - 1;
-            query = query.order('created_at', { ascending: false }).range(from, to);
+            const to = from + pageSize;
+            const paginated = filtered.slice(from, to).sort((a, b) => new Date((b.createdAt || b.created_at) as string).getTime() - new Date((a.createdAt || a.created_at) as string).getTime());
 
-            const { data, error, count } = await query;
-            if (error) throw error;
-            return { products: (data || []) as Product[], total: count || 0 };
+            return { products: paginated, total };
         },
     });
 }
@@ -103,13 +98,11 @@ export function useProduct(id: string | null) {
         queryKey: ['product', id],
         queryFn: async () => {
             if (!id) return null;
-            const { data, error } = await insforge.database
-                .from('products')
-                .select('*, category:categories(id, name)')
-                .eq('id', id)
-                .single();
-            if (error) throw error;
-            return data as Product;
+            // The backend doesn't have a single GET id currently, so fetch all and find
+            const { data } = await api.get<Product[]>('/products');
+            const found = data.find((p) => p.id === id);
+            if (!found) throw new Error('Product not found');
+            return found;
         },
         enabled: !!id,
     });
@@ -119,12 +112,12 @@ export function useCreateProduct() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (product: ProductFormData) => {
-            const business_id = await getBusinessId();
-            const { data, error } = await insforge.database
-                .from('products')
-                .insert({ ...product, business_id })
-                .select();
-            if (error) throw error;
+            // Map category_id to category object for the backend request
+            const payload = { ...product };
+            if (payload.category_id) {
+                payload.category = { id: payload.category_id };
+            }
+            const { data } = await api.post<Product>('/products', payload);
             return data;
         },
         onSuccess: () => {
@@ -138,12 +131,13 @@ export function useUpdateProduct() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async ({ id, ...values }: ProductFormData & { id: string }) => {
-            const { data, error } = await insforge.database
-                .from('products')
-                .update(values)
-                .eq('id', id)
-                .select();
-            if (error) throw error;
+            const payload = { ...values };
+            if (payload.category_id) {
+                payload.category = { id: payload.category_id };
+            } else if (payload.category_id === null) {
+                payload.category = null;
+            }
+            const { data } = await api.patch<Product>(`/products/${id}`, payload);
             return data;
         },
         onSuccess: () => {
@@ -157,11 +151,7 @@ export function useDeleteProduct() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await insforge.database
-                .from('products')
-                .delete()
-                .eq('id', id);
-            if (error) throw error;
+            await api.delete(`/products/${id}`);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['products'] });

@@ -6,6 +6,7 @@ import { formatCurrency } from '@/lib/utils';
 import { LuPlus, LuSearch, LuPencil, LuTrash2, LuEye, LuUsers, LuX, LuLoader, LuPhone, LuMail } from 'react-icons/lu';
 import { useParties, useCreateParty, useUpdateParty, useDeleteParty, type Party, type PartyFormData } from '@/hooks/useParties';
 import { useToast } from '@/components/ui/Toast';
+import { Portal } from '@/components/ui/Portal';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } };
@@ -138,9 +139,10 @@ export default function PartiesPage() {
       </motion.div>
 
       {/* View Modal */}
-      <AnimatePresence>
-        {viewParty && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setViewParty(null)}>
+      <Portal>
+        <AnimatePresence>
+          {viewParty && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => setViewParty(null)}>
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Party Details</h2>
@@ -159,14 +161,16 @@ export default function PartiesPage() {
                 ))}
               </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Portal>
 
       {/* Delete Confirm */}
-      <AnimatePresence>
-        {deleteConfirm && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
+      <Portal>
+        <AnimatePresence>
+          {deleteConfirm && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-6 text-center">
               <LuTrash2 className="w-12 h-12 mx-auto text-red-500 mb-3" />
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Delete Party?</h3>
@@ -176,16 +180,19 @@ export default function PartiesPage() {
                 <button onClick={() => handleDelete(deleteConfirm)} disabled={deleteParty.isPending} className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold">{deleteParty.isPending ? 'Deleting...' : 'Delete'}</button>
               </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Portal>
 
       {/* Add/Edit Modal */}
-      <AnimatePresence>
-        {showModal && (
+      <Portal>
+        <AnimatePresence>
+          {showModal && (
           <PartyFormModal party={editingParty} isSubmitting={createParty.isPending || updateParty.isPending} onSubmit={handleSubmit} onClose={() => { setShowModal(false); setEditingParty(null); }} />
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+      </Portal>
     </motion.div>
   );
 }
@@ -199,7 +206,7 @@ function PartyFormModal({ party, isSubmitting, onSubmit, onClose }: { party: Par
   const update = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={onClose}>
       <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">{party ? 'Edit Party' : 'Add Party'}</h2>

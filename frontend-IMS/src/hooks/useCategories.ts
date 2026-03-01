@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { insforge } from '@/lib/insforge';
+import api from '@/lib/api';
 
 export interface Category {
     id: string;
@@ -20,28 +20,13 @@ export interface CategoryFormData {
     is_active?: boolean;
 }
 
-async function getBusinessId(): Promise<string> {
-    // Try localStorage first
-    const cached = typeof window !== 'undefined' ? localStorage.getItem('ims_business_id') : null;
-    if (cached) return cached;
-
-    // Fetch from database
-    const { data } = await insforge.database.from('businesses').select('id').limit(1).single();
-    const id = data?.id || '';
-    if (id && typeof window !== 'undefined') localStorage.setItem('ims_business_id', id);
-    return id;
-}
-
 export function useCategories() {
     return useQuery({
         queryKey: ['categories'],
         queryFn: async () => {
-            const { data, error } = await insforge.database
-                .from('categories')
-                .select('*')
-                .order('name', { ascending: true });
-            if (error) throw error;
-            return (data || []) as Category[];
+            const { data } = await api.get<Category[]>('/categories');
+            let categories = Array.isArray(data) ? data : [];
+            return categories.sort((a, b) => a.name.localeCompare(b.name));
         },
     });
 }
@@ -50,12 +35,7 @@ export function useCreateCategory() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (cat: CategoryFormData) => {
-            const business_id = await getBusinessId();
-            const { data, error } = await insforge.database
-                .from('categories')
-                .insert({ ...cat, business_id })
-                .select();
-            if (error) throw error;
+            const { data } = await api.post<Category>('/categories', cat);
             return data;
         },
         onSuccess: () => {
@@ -68,12 +48,7 @@ export function useUpdateCategory() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async ({ id, ...values }: CategoryFormData & { id: string }) => {
-            const { data, error } = await insforge.database
-                .from('categories')
-                .update(values)
-                .eq('id', id)
-                .select();
-            if (error) throw error;
+            const { data } = await api.patch<Category>(`/categories/${id}`, values);
             return data;
         },
         onSuccess: () => {
@@ -86,11 +61,7 @@ export function useDeleteCategory() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await insforge.database
-                .from('categories')
-                .delete()
-                .eq('id', id);
-            if (error) throw error;
+            await api.delete(`/categories/${id}`);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['categories'] });

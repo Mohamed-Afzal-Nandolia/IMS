@@ -2,7 +2,7 @@
 
 import { useTheme } from '@/contexts/ThemeContext';
 import { useBusiness } from '@/contexts/BusinessContext';
-import { UserButton, SignedIn } from '@insforge/nextjs';
+import { UserButton, SignedIn } from '@/components/auth/AuthComponents';
 import { LuSun, LuMoon, LuBell, LuSearch, LuMenu, LuBuilding2 } from 'react-icons/lu';
 import { motion } from 'framer-motion';
 import { useState } from 'react';

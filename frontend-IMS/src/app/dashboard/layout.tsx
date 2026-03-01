@@ -1,26 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Topbar } from '@/components/layout/Topbar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { insforge } from '@/lib/insforge';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  // Bootstrap business_id into localStorage for all hooks
-  useEffect(() => {
-    async function init() {
-      if (localStorage.getItem('ims_business_id')) return;
-      try {
-        const { data } = await insforge.database.from('businesses').select('id').limit(1).single();
-        if (data?.id) localStorage.setItem('ims_business_id', data.id);
-      } catch {}
-    }
-    init();
-  }, []);
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
@@ -57,8 +44,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         <Topbar onMenuClick={() => setMobileOpen(!mobileOpen)} />
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
           className="p-4 lg:p-6"
         >
@@ -70,8 +57,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="lg:hidden">
         <Topbar onMenuClick={() => setMobileOpen(!mobileOpen)} />
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
           className="p-4"
         >
