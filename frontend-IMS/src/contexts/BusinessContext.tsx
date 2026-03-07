@@ -6,11 +6,27 @@ import { useAuth } from './AuthContext';
 interface Business {
   id: string;
   name: string;
-  legal_name?: string;
+  email?: string;
+  phone?: string;
   gstin?: string;
-  gst_type?: string;
+  address?: string;
+  city?: string;
   state?: string;
-  state_code?: string;
+  pincode?: string;
+  bankName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
+  upiId?: string;
+  invoicePrefix?: string;
+  invoiceTerms?: string;
+  invoiceNotes?: string;
+  showBankDetails?: boolean;
+  showUpiQr?: boolean;
+  showDigitalSignature?: boolean;
+  lowStockAlert?: boolean;
+  newInvoiceAlert?: boolean;
+  paymentReceivedAlert?: boolean;
+  overdueInvoicesAlert?: boolean;
 }
 
 interface BusinessContextType {
