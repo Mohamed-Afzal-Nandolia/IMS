@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils';
 import { LuPlus, LuSearch, LuEye, LuTrash2, LuFileText, LuLoader, LuX } from 'react-icons/lu';
-import { useInvoices, useDeleteInvoice, type Invoice } from '@/hooks/useInvoices';
+import { useInvoices, useDeleteInvoice, useCreateInvoice, type Invoice, type InvoiceItem } from '@/hooks/useInvoices';
+import { useParties } from '@/hooks/useParties';
+import { useProducts } from '@/hooks/useProducts';
 import { useToast } from '@/components/ui/Toast';
 import { AnimatePresence } from 'framer-motion';
 
@@ -23,6 +25,7 @@ export default function PurchasesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
   const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
@@ -46,6 +49,9 @@ export default function PurchasesPage() {
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">Purchase Invoices</h1>
           <p className="text-sm text-gray-500 mt-1">{total} invoices • Total: {formatCurrency(totalPurchases)}</p>
         </div>
+        <button onClick={() => setShowModal(true)} className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold hover:shadow-lg transition-all flex items-center gap-2 self-start">
+          <LuPlus className="w-4 h-4" /> New Purchase
+        </button>
       </motion.div>
 
       <motion.div variants={item} className="flex flex-col sm:flex-row gap-3">
@@ -121,6 +127,150 @@ export default function PurchasesPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {showModal && <InvoiceFormModal invoiceType="purchase" onClose={() => setShowModal(false)} />}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClose: () => void }) {
+  const { data: partiesData } = useParties({ pageSize: 100 });
+  const { data: productsData } = useProducts({ pageSize: 100 });
+  const createInvoice = useCreateInvoice();
+  const { addToast } = useToast();
+
+  const [partyId, setPartyId] = useState('');
+  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dueDate, setDueDate] = useState('');
+  const [notes, setNotes] = useState('');
+  const [items, setItems] = useState<InvoiceItem[]>([]);
+
+  const addItem = () => setItems([...items, { productId: '', quantity: 1, unitPrice: 0, taxRate: 18, taxAmount: 0, totalPrice: 0 }]);
+
+  const updateItem = (index: number, field: string, value: any) => {
+    const updated = [...items];
+    (updated[index] as any)[field] = value;
+
+    if (field === 'productId' && productsData?.products) {
+      const product = productsData.products.find((p) => p.id === value);
+      if (product) {
+        updated[index].unitPrice = product.purchasePrice || product.sellingPrice || 0;
+        updated[index].taxRate = product.gstRate || 0;
+        updated[index].productName = product.name;
+      }
+    }
+
+    const itm = updated[index];
+    const subtotal = itm.quantity * itm.unitPrice;
+    itm.taxAmount = subtotal * itm.taxRate / 100;
+    itm.totalPrice = subtotal + itm.taxAmount;
+    setItems(updated);
+  };
+
+  const removeItem = (index: number) => setItems(items.filter((_, i) => i !== index));
+
+  const subtotal = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+  const totalGst = items.reduce((s, i) => s + i.taxAmount, 0);
+  const grandTotal = subtotal + totalGst;
+
+  const handleSubmit = async () => {
+    if (!partyId || items.length === 0) { addToast({ type: 'warning', title: 'Missing data', message: 'Select a party and add items' }); return; }
+    try {
+      await createInvoice.mutateAsync({
+        type: invoiceType, partyId: partyId, issueDate: invoiceDate, dueDate: dueDate || invoiceDate,
+        subtotal,
+        cgstAmount: totalGst / 2, sgstAmount: totalGst / 2, igstAmount: 0, totalAmount: grandTotal,
+        status: 'draft', notes, items,
+      });
+      addToast({ type: 'success', title: 'Purchase Created' });
+      onClose();
+    } catch (err: any) { addToast({ type: 'error', title: 'Error', message: err.message }); }
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">New Purchase Invoice</h2>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700"><LuX className="w-5 h-5" /></button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier *</label>
+            <select value={partyId} onChange={(e) => setPartyId(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none">
+              <option value="">Select supplier</option>
+              {(partiesData?.parties || []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Invoice Date</label>
+            <input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
+            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none" />
+          </div>
+        </div>
+
+        {/* Items */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Line Items</h3>
+            <button onClick={addItem} className="text-sm text-indigo-600 font-medium flex items-center gap-1"><LuPlus className="w-4 h-4" /> Add Item</button>
+          </div>
+          {items.length === 0 ? (
+            <div className="text-center py-8 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+              <p className="text-sm text-gray-400">No items added yet</p>
+              <button onClick={addItem} className="mt-2 text-sm text-indigo-600 font-medium">+ Add Item</button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {items.map((itm, idx) => (
+                <div key={idx} className="grid grid-cols-12 gap-2 items-end bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">
+                  <div className="col-span-4">
+                    <label className="text-xs text-gray-500">Product</label>
+                    <select value={itm.productId} onChange={(e) => updateItem(idx, 'productId', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none">
+                      <option value="">Select</option>
+                      {(productsData?.products || []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="col-span-1"><label className="text-xs text-gray-500">Qty</label><input type="number" min="1" value={itm.quantity} onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))} className="w-full px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm tabnum" /></div>
+                  <div className="col-span-2"><label className="text-xs text-gray-500">Cost Price</label><input type="number" value={itm.unitPrice} onChange={(e) => updateItem(idx, 'unitPrice', Number(e.target.value))} className="w-full px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm tabnum" /></div>
+                  <div className="col-span-1"><label className="text-xs text-gray-500">GST%</label><input type="number" value={itm.taxRate} onChange={(e) => updateItem(idx, 'taxRate', Number(e.target.value))} className="w-full px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm tabnum" /></div>
+                  <div className="col-span-3 flex items-end gap-2">
+                    <div className="flex-1"><label className="text-xs text-gray-500">Total</label><p className="font-semibold text-sm text-gray-900 dark:text-white py-2 tabnum">{formatCurrency(itm.totalPrice)}</p></div>
+                    <button onClick={() => removeItem(idx)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><LuX className="w-4 h-4" /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Totals & Notes */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Additional Notes</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Enter any notes for this purchase..." rows={3} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none resize-none" />
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm"><span className="text-gray-500">Subtotal</span><span className="font-medium tabnum">{formatCurrency(subtotal)}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-gray-500">CGST</span><span className="tabnum">{formatCurrency(totalGst / 2)}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-gray-500">SGST</span><span className="tabnum">{formatCurrency(totalGst / 2)}</span></div>
+            <div className="flex justify-between text-base font-bold border-t pt-2 mt-2"><span>Grand Total</span><span className="text-indigo-600 tabnum">{formatCurrency(grandTotal)}</span></div>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-6 mt-4 border-t border-gray-100 dark:border-gray-700">
+          <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium">Cancel</button>
+          <button onClick={handleSubmit} disabled={createInvoice.isPending} className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold disabled:opacity-50 flex items-center gap-2">
+            {createInvoice.isPending && <LuLoader className="w-4 h-4 animate-spin" />} Create Purchase
+          </button>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

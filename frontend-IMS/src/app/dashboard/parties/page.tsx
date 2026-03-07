@@ -122,7 +122,7 @@ export default function PartiesPage() {
                     <td className="px-5 py-3 text-gray-500 font-mono text-xs">{p.gstin || '—'}</td>
                     <td className="px-5 py-3 text-gray-500">{p.phone || '—'}</td>
                     <td className="px-5 py-3 text-gray-500">{p.city || '—'}</td>
-                    <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">{formatCurrency(p.openingBalance || 0)}</td>
+                    <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white tabnum">{formatCurrency(p.currentBalance || 0)}</td>
                     <td className="px-5 py-3">
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={() => setViewParty(p)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-indigo-600"><LuEye className="w-4 h-4" /></button>
@@ -150,8 +150,7 @@ export default function PartiesPage() {
               </div>
               <div className="space-y-3 text-sm">
                 {[['Name', viewParty.name], ['Type', viewParty.type], ['GSTIN', viewParty.gstin || '—'], ['Phone', viewParty.phone || '—'],
-                  ['Email', viewParty.email || '—'], ['Address', viewParty.address || '—'], ['City', viewParty.city || '—'],
-                  ['State', viewParty.state || '—'], ['Pincode', viewParty.pincode || '—'],
+                  ['Email', viewParty.email || '—'], ['Billing Address', viewParty.billingAddress || '—'], ['Shipping Address', viewParty.shippingAddress || '—'],
                   ['Opening Balance', formatCurrency(viewParty.openingBalance || 0)], ['Credit Limit', formatCurrency(viewParty.creditLimit || 0)],
                 ].map(([l, v]) => (
                   <div key={l} className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700/50">
@@ -200,8 +199,8 @@ export default function PartiesPage() {
 function PartyFormModal({ party, isSubmitting, onSubmit, onClose }: { party: Party | null; isSubmitting: boolean; onSubmit: (data: PartyFormData) => void; onClose: () => void; }) {
   const [form, setForm] = useState<PartyFormData>({
     name: party?.name || '', type: (party?.type as any) || 'customer', gstin: party?.gstin || '', phone: party?.phone || '',
-    email: party?.email || '', address: party?.address || '', city: party?.city || '', state: party?.state || '', pincode: party?.pincode || '',
-    openingBalance: party?.openingBalance || 0, creditLimit: party?.creditLimit || 0, isActive: party?.isActive ?? true,
+    email: party?.email || '', billingAddress: party?.billingAddress || '', shippingAddress: party?.shippingAddress || '',
+    isActive: party?.isActive ?? true,
   });
   const update = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -223,12 +222,8 @@ function PartyFormModal({ party, isSubmitting, onSubmit, onClose }: { party: Par
             <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">GSTIN</label><input value={form.gstin} onChange={(e) => update('gstin', e.target.value)} placeholder="22AAAAA0000A1Z5" className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-indigo-500" /></div>
             <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone</label><input value={form.phone} onChange={(e) => update('phone', e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-indigo-500" /></div>
             <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label><input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-indigo-500" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">City</label><input value={form.city} onChange={(e) => update('city', e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-indigo-500" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">State</label><input value={form.state} onChange={(e) => update('state', e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-indigo-500" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pincode</label><input value={form.pincode} onChange={(e) => update('pincode', e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-indigo-500" /></div>
-            <div className="sm:col-span-2"><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label><input value={form.address} onChange={(e) => update('address', e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-indigo-500" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Opening Balance (₹)</label><input type="number" value={form.openingBalance || ''} onChange={(e) => update('openingBalance', Number(e.target.value))} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-indigo-500" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Credit Limit (₹)</label><input type="number" value={form.creditLimit || ''} onChange={(e) => update('creditLimit', Number(e.target.value))} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-indigo-500" /></div>
+            <div className="sm:col-span-2"><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Billing Address</label><textarea rows={2} value={form.billingAddress} onChange={(e) => update('billingAddress', e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-indigo-500 resize-none" /></div>
+            <div className="sm:col-span-2"><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Shipping Address</label><textarea rows={2} value={form.shippingAddress} onChange={(e) => update('shippingAddress', e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-indigo-500 resize-none" /></div>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
             <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium">Cancel</button>

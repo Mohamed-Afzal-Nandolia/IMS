@@ -19,10 +19,11 @@ export default function AccountingPage() {
   const revenue = sales.reduce((s, i) => s + (i.subtotal || 0), 0);
   const cogs = purchases.reduce((s, i) => s + (i.subtotal || 0), 0);
   const grossProfit = revenue - cogs;
-  const taxCollected = sales.reduce((s, i) => s + (i.cgst_amount || 0) + (i.sgst_amount || 0) + (i.igst_amount || 0), 0);
-  const taxPaid = purchases.reduce((s, i) => s + (i.cgst_amount || 0) + (i.sgst_amount || 0) + (i.igst_amount || 0), 0);
-  const totalReceivable = sales.reduce((s, i) => s + (i.total_amount || 0) - (i.amount_paid || 0), 0);
-  const totalPayable = purchases.reduce((s, i) => s + (i.total_amount || 0) - (i.amount_paid || 0), 0);
+  const taxCollected = sales.reduce((s, i) => s + (i.cgstAmount || 0) + (i.sgstAmount || 0) + (i.igstAmount || 0), 0);
+  const taxPaid = purchases.reduce((s, i) => s + (i.cgstAmount || 0) + (i.sgstAmount || 0) + (i.igstAmount || 0), 0);
+  const totalReceivable = sales.reduce((s, i) => s + (i.totalAmount || 0) - (i.amountPaid || 0), 0);
+  const totalPayable = purchases.reduce((s, i) => s + (i.totalAmount || 0) - (i.amountPaid || 0), 0);
+
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
@@ -75,12 +76,12 @@ export default function AccountingPage() {
             <div className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 p-5">
               <p className="text-sm text-gray-500 mb-1">Total Receivable</p>
               <p className="text-2xl font-bold text-emerald-600">{formatCurrency(totalReceivable)}</p>
-              <p className="text-xs text-gray-400 mt-1">{sales.filter((i) => (i.total_amount - (i.amount_paid || 0)) > 0).length} unpaid invoices</p>
+              <p className="text-xs text-gray-400 mt-1">{sales.filter((i) => (i.totalAmount - (i.amountPaid || 0)) > 0).length} unpaid invoices</p>
             </div>
             <div className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 p-5">
               <p className="text-sm text-gray-500 mb-1">Total Payable</p>
               <p className="text-2xl font-bold text-red-600">{formatCurrency(totalPayable)}</p>
-              <p className="text-xs text-gray-400 mt-1">{purchases.filter((i) => (i.total_amount - (i.amount_paid || 0)) > 0).length} unpaid bills</p>
+              <p className="text-xs text-gray-400 mt-1">{purchases.filter((i) => (i.totalAmount - (i.amountPaid || 0)) > 0).length} unpaid bills</p>
             </div>
           </motion.div>
         </>

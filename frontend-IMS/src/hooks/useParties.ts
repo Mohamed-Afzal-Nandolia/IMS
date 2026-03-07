@@ -31,14 +31,8 @@ export interface PartyFormData {
     gstin?: string;
     phone?: string;
     email?: string;
-    address?: string;
-    city?: string;
-    state?: string;
-    pincode?: string;
     billingAddress?: string;
     shippingAddress?: string;
-    openingBalance?: number;
-    creditLimit?: number;
     isActive?: boolean;
 }
 

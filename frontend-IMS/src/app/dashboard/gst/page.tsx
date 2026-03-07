@@ -16,17 +16,17 @@ export default function GSTPage() {
   const sales = salesData?.invoices || [];
   const purchases = purchaseData?.invoices || [];
 
-  const totalSalesCGST = sales.reduce((s, i) => s + (i.cgst_amount || 0), 0);
-  const totalSalesSGST = sales.reduce((s, i) => s + (i.sgst_amount || 0), 0);
-  const totalSalesIGST = sales.reduce((s, i) => s + (i.igst_amount || 0), 0);
-  const totalOutputTax = totalSalesCGST + totalSalesSGST + totalSalesIGST;
+  const totalSalesCGST = sales.reduce((s, i) => s + (i.cgstAmount || 0), 0);
+  const totalSalesSGST = sales.reduce((s, i) => s + (i.sgstAmount || 0), 0);
+  const totalSalesIGST = sales.reduce((s, i) => s + (i.igstAmount || 0), 0);
+  const totalSalesTax = totalSalesCGST + totalSalesSGST + totalSalesIGST;
 
-  const totalPurchaseCGST = purchases.reduce((s, i) => s + (i.cgst_amount || 0), 0);
-  const totalPurchaseSGST = purchases.reduce((s, i) => s + (i.sgst_amount || 0), 0);
-  const totalPurchaseIGST = purchases.reduce((s, i) => s + (i.igst_amount || 0), 0);
+  const totalPurchaseCGST = purchases.reduce((s, i) => s + (i.cgstAmount || 0), 0);
+  const totalPurchaseSGST = purchases.reduce((s, i) => s + (i.sgstAmount || 0), 0);
+  const totalPurchaseIGST = purchases.reduce((s, i) => s + (i.igstAmount || 0), 0);
   const totalITC = totalPurchaseCGST + totalPurchaseSGST + totalPurchaseIGST;
 
-  const netPayable = Math.max(0, totalOutputTax - totalITC);
+  const netPayable = Math.max(0, totalSalesTax - totalITC);
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
@@ -41,7 +41,7 @@ export default function GSTPage() {
           <motion.div variants={item} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 p-5">
               <div className="flex items-center gap-2 mb-2"><LuArrowUpRight className="w-5 h-5 text-red-500" /><span className="text-sm text-gray-500">Output Tax (on Sales)</span></div>
-              <p className="text-2xl font-bold text-red-600">{formatCurrency(totalOutputTax)}</p>
+              <p className="text-2xl font-bold text-red-600">{formatCurrency(totalSalesTax)}</p>
             </div>
             <div className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 p-5">
               <div className="flex items-center gap-2 mb-2"><LuArrowDownRight className="w-5 h-5 text-emerald-500" /><span className="text-sm text-gray-500">Input Tax Credit (on Purchases)</span></div>
@@ -59,7 +59,13 @@ export default function GSTPage() {
             <table className="w-full text-sm">
               <thead><tr className="text-left text-gray-500 border-b bg-gray-50/50"><th className="px-5 py-3">Component</th><th className="px-5 py-3 text-right">CGST</th><th className="px-5 py-3 text-right">SGST</th><th className="px-5 py-3 text-right">IGST</th><th className="px-5 py-3 text-right">Total</th></tr></thead>
               <tbody>
-                <tr className="border-b"><td className="px-5 py-3 font-medium">Output Tax</td><td className="px-5 py-3 text-right">{formatCurrency(totalSalesCGST)}</td><td className="px-5 py-3 text-right">{formatCurrency(totalSalesSGST)}</td><td className="px-5 py-3 text-right">{formatCurrency(totalSalesIGST)}</td><td className="px-5 py-3 text-right font-bold">{formatCurrency(totalOutputTax)}</td></tr>
+                <tr className="border-b">
+                    <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">Output Tax (Sales)</td>
+                    <td className="px-5 py-3 text-right">{formatCurrency(totalSalesCGST)}</td>
+                    <td className="px-5 py-3 text-right">{formatCurrency(totalSalesSGST)}</td>
+                    <td className="px-5 py-3 text-right">{formatCurrency(totalSalesIGST)}</td>
+                    <td className="px-5 py-3 text-right font-bold text-indigo-600">{formatCurrency(totalSalesTax)}</td>
+                </tr>
                 <tr className="border-b"><td className="px-5 py-3 font-medium">Input Credit</td><td className="px-5 py-3 text-right">{formatCurrency(totalPurchaseCGST)}</td><td className="px-5 py-3 text-right">{formatCurrency(totalPurchaseSGST)}</td><td className="px-5 py-3 text-right">{formatCurrency(totalPurchaseIGST)}</td><td className="px-5 py-3 text-right font-bold text-emerald-600">-{formatCurrency(totalITC)}</td></tr>
                 <tr className="bg-indigo-50 dark:bg-indigo-900/20 font-bold text-indigo-700 dark:text-indigo-300">
                   <td className="px-5 py-3">Net Payable</td>

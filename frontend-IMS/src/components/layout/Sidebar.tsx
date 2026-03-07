@@ -87,7 +87,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState<string | null>(null);
   const [hoveredNav, setHoveredNav] = useState<{ label: string; top: number } | null>(null);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout>();
+  const hoverTimeoutRef = useRef<NodeJS.Timeout>(null);
 
   const toggleExpand = (label: string) => {
     setExpanded((prev) => (prev === label ? null : label));

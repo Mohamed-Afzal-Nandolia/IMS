@@ -190,11 +190,11 @@ export default function DashboardPage() {
               {(stats?.recentInvoices || []).map((inv: any) => (
                 <div key={inv.id} className="px-5 py-3 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{inv.invoice_number}</p>
-                    <p className="text-xs text-gray-400">{inv.party?.name || 'Unknown'} • {new Date(inv.created_at).toLocaleDateString('en-IN')}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{inv.invoiceNumber}</p>
+                    <p className="text-xs text-gray-500 capitalize">{inv.type.replace('_', ' ')}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(inv.total_amount)}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(inv.totalAmount)}</p>
                     <span className={`text-xs font-medium capitalize ${inv.invoice_type === 'sale' ? 'text-emerald-600' : 'text-blue-600'}`}>{inv.invoice_type}</span>
                   </div>
                 </div>

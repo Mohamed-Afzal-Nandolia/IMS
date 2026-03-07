@@ -16,13 +16,13 @@ export default function GSTR3BPage() {
   const purchases = purchaseData?.invoices || [];
   const isLoading = loadingSales || loadingPurchases;
 
-  const outwardTax = sales.reduce((s, i) => s + (i.cgst_amount || 0) + (i.sgst_amount || 0) + (i.igst_amount || 0), 0);
-  const itc = purchases.reduce((s, i) => s + (i.cgst_amount || 0) + (i.sgst_amount || 0) + (i.igst_amount || 0), 0);
+  const outwardTax = sales.reduce((s, i) => s + (i.cgstAmount || 0) + (i.sgstAmount || 0) + (i.igstAmount || 0), 0);
+  const itc = purchases.reduce((s, i) => s + (i.cgstAmount || 0) + (i.sgstAmount || 0) + (i.igstAmount || 0), 0);
   const netTax = Math.max(0, outwardTax - itc);
 
   const rows = [
-    { label: '3.1 Outward Supplies (Taxable)', taxable: sales.reduce((s, i) => s + (i.subtotal || 0), 0), cgst: sales.reduce((s, i) => s + (i.cgst_amount || 0), 0), sgst: sales.reduce((s, i) => s + (i.sgst_amount || 0), 0), igst: sales.reduce((s, i) => s + (i.igst_amount || 0), 0) },
-    { label: '4. Eligible ITC', taxable: purchases.reduce((s, i) => s + (i.subtotal || 0), 0), cgst: purchases.reduce((s, i) => s + (i.cgst_amount || 0), 0), sgst: purchases.reduce((s, i) => s + (i.sgst_amount || 0), 0), igst: purchases.reduce((s, i) => s + (i.igst_amount || 0), 0) },
+    { label: '3.1 Outward Supplies (Taxable)', taxable: sales.reduce((s, i) => s + (i.subtotal || 0), 0), cgst: sales.reduce((s, i) => s + (i.cgstAmount || 0), 0), sgst: sales.reduce((s, i) => s + (i.sgstAmount || 0), 0), igst: sales.reduce((s, i) => s + (i.igstAmount || 0), 0) },
+    { label: '4. Eligible ITC', taxable: purchases.reduce((s, i) => s + (i.subtotal || 0), 0), cgst: purchases.reduce((s, i) => s + (i.cgstAmount || 0), 0), sgst: purchases.reduce((s, i) => s + (i.sgstAmount || 0), 0), igst: purchases.reduce((s, i) => s + (i.igstAmount || 0), 0) },
   ];
 
   return (
