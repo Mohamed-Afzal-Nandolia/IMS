@@ -6,9 +6,10 @@ import {
   LuTrendingUp, LuShoppingCart, LuPackage, LuUsers, LuIndianRupee,
   LuTriangleAlert, LuLoader, LuArrowUpRight,
 } from 'react-icons/lu';
-import { useDashboardStats } from '@/hooks/useDashboard';
+import { useDashboardStats, type TimeRange } from '@/hooks/useDashboard';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { useState } from 'react';
 
 // Lazy-load recharts — heavy chart library, not needed for initial render
 // rule: bundle-dynamic-imports — defers ~200KB of chart code
@@ -20,24 +21,17 @@ const CartesianGrid = dynamic(() => import('recharts').then(m => m.CartesianGrid
 const Tooltip = dynamic(() => import('recharts').then(m => m.Tooltip), { ssr: false });
 const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.ResponsiveContainer), { ssr: false });
 
-// Mock data for the chart since the backend might not have this aggregation yet
-const chartData = [
-  { name: 'Jan', sales: 4000, purchases: 2400 },
-  { name: 'Feb', sales: 3000, purchases: 1398 },
-  { name: 'Mar', sales: 2000, purchases: 9800 },
-  { name: 'Apr', sales: 2780, purchases: 3908 },
-  { name: 'May', sales: 1890, purchases: 4800 },
-  { name: 'Jun', sales: 2390, purchases: 3800 },
-  { name: 'Jul', sales: 3490, purchases: 4300 },
-];
+// Analytics data is now derived dynamically from useDashboardStats()
+
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
 const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } };
 
 export default function DashboardPage() {
-  const { data: stats, isLoading } = useDashboardStats();
+  const [range, setRange] = useState<TimeRange>('6months');
+  const { data: stats, isLoading } = useDashboardStats(range);
 
-  if (isLoading) {
+  if (isLoading && !stats) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center">
@@ -87,17 +81,25 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sales & Purchases Overview</h2>
-            <p className="text-sm text-gray-500 mt-1">Monthly performance comparison</p>
+            <p className="text-sm text-gray-500 mt-1">
+              {(range === '7days' || range === '30days') ? 'Daily' : 'Monthly'} performance comparison
+            </p>
           </div>
-          <select className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-xl px-3 py-2 outline-none focus:border-indigo-500 transition-colors">
-            <option>Last 7 months</option>
-            <option>This Year</option>
-            <option>Last Year</option>
+          <select 
+            value={range} 
+            onChange={(e) => setRange(e.target.value as TimeRange)}
+            className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-xl px-3 py-2 outline-none focus:border-indigo-500 transition-colors"
+          >
+            <option value="7days">Last 7 days</option>
+            <option value="30days">Last 30 days</option>
+            <option value="6months">Last 6 months</option>
+            <option value="thisYear">This Year</option>
           </select>
         </div>
         <div className="h-[300px] w-full mt-4">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart data={stats?.chartData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+
               <defs>
                 <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>

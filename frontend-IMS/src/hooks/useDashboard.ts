@@ -3,33 +3,115 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 
-export function useDashboardStats() {
+export type TimeRange = '7days' | '30days' | '6months' | 'thisYear';
+
+export function useDashboardStats(range: TimeRange = '6months') {
     return useQuery({
-        queryKey: ['dashboard', 'stats'],
+        queryKey: ['dashboard', 'stats', range],
         queryFn: async () => {
             // Concurrent API calls to our backend endpoints
+            // Requesting a larger page size to ensure we have enough data for aggregation
+            const params = { pageSize: 1000 };
             const [salesRes, purchasesRes, productsRes, partiesRes] = await Promise.all([
-                api.get('/invoices', { params: { type: 'sale' } }),
-                api.get('/invoices', { params: { type: 'purchase' } }),
-                api.get('/products'),
-                api.get('/parties')
+                api.get('/invoices', { params: { ...params, type: 'sale' } }),
+                api.get('/invoices', { params: { ...params, type: 'purchase' } }),
+                api.get('/products', { params }),
+                api.get('/parties', { params })
             ]);
 
-            const sales = Array.isArray(salesRes.data) ? salesRes.data : [];
-            const purchases = Array.isArray(purchasesRes.data) ? purchasesRes.data : [];
-            const products = Array.isArray(productsRes.data) ? productsRes.data : [];
-            const parties = Array.isArray(partiesRes.data) ? partiesRes.data : [];
+            const getArray = (res: any) => {
+                const data = res.data;
+                if (Array.isArray(data)) return data;
+                if (data && Array.isArray(data.invoices)) return data.invoices;
+                if (data && Array.isArray(data.products)) return data.products;
+                if (data && Array.isArray(data.parties)) return data.parties;
+                return [];
+            };
+
+            const sales = getArray(salesRes);
+            const purchases = getArray(purchasesRes);
+            const products = getArray(productsRes);
+            const parties = getArray(partiesRes);
 
             const totalSales = sales.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
             const totalPurchases = purchases.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
+            const totalSalesTax = sales.reduce((sum: number, inv: any) => sum + (inv.cgstAmount || 0) + (inv.sgstAmount || 0) + (inv.igstAmount || 0), 0);
+
+            // Aggregate data for charts based on range
+            const chartData = [];
+            const now = new Date();
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            if (range === '7days' || range === '30days') {
+                const days = range === '7days' ? 7 : 30;
+                for (let i = days - 1; i >= 0; i--) {
+                    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+                    const dateStr = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+
+                    const dayStart = new Date(d.setHours(0, 0, 0, 0));
+                    const dayEnd = new Date(d.setHours(23, 59, 59, 999));
+
+                    const dailySales = sales
+                        .filter((inv: any) => {
+                            const invDate = new Date(inv.issueDate || inv.createdAt);
+                            return invDate >= dayStart && invDate <= dayEnd;
+                        })
+                        .reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
+
+                    const dailyPurchases = purchases
+                        .filter((inv: any) => {
+                            const invDate = new Date(inv.issueDate || inv.createdAt);
+                            return invDate >= dayStart && invDate <= dayEnd;
+                        })
+                        .reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
+
+                    chartData.push({
+                        name: dateStr,
+                        sales: dailySales,
+                        purchases: dailyPurchases,
+                        revenue: dailySales,
+                        profit: dailySales - dailyPurchases
+                    });
+                }
+            } else {
+                const monthsCount = range === '6months' ? 6 : (now.getMonth() + 1);
+                for (let i = monthsCount - 1; i >= 0; i--) {
+                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const monthName = months[d.getMonth()];
+                    const year = d.getFullYear();
+                    const month = d.getMonth();
+
+                    const monthlySales = sales
+                        .filter((inv: any) => {
+                            const invDate = new Date(inv.issueDate || inv.createdAt);
+                            return invDate.getMonth() === month && invDate.getFullYear() === year;
+                        })
+                        .reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
+
+                    const monthlyPurchases = purchases
+                        .filter((inv: any) => {
+                            const invDate = new Date(inv.issueDate || inv.createdAt);
+                            return invDate.getMonth() === month && invDate.getFullYear() === year;
+                        })
+                        .reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
+
+                    chartData.push({
+                        name: monthName,
+                        sales: monthlySales,
+                        purchases: monthlyPurchases,
+                        revenue: monthlySales,
+                        profit: monthlySales - monthlyPurchases
+                    });
+                }
+            }
 
             const lowStockItems = products
-                .filter((p: any) => p.currentStock > 0 && p.currentStock < 20)
-                .sort((a: any, b: any) => a.currentStock - b.currentStock)
+                .filter((p: any) => (p.currentStock ?? 0) > 0 && (p.currentStock ?? 0) < 20)
+                .sort((a: any, b: any) => (a.currentStock ?? 0) - (b.currentStock ?? 0))
                 .slice(0, 10);
 
             const recentInvoices = [...sales, ...purchases]
-                .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .sort((a: any, b: any) => new Date(b.issueDate || b.createdAt).getTime() - new Date(a.issueDate || a.createdAt).getTime())
                 .slice(0, 5);
 
             return {
@@ -42,8 +124,11 @@ export function useDashboardStats() {
                 totalParties: parties.length,
                 lowStockItems,
                 recentInvoices,
+                chartData,
+                totalSalesTax,
             };
         },
         refetchInterval: 30000, // Refresh every 30s
+        placeholderData: (previousData) => previousData,
     });
 }

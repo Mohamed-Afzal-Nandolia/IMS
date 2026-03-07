@@ -7,6 +7,8 @@ import dynamic from 'next/dynamic';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useProducts } from '@/hooks/useProducts';
 import { useParties } from '@/hooks/useParties';
+import { useDashboardStats, type TimeRange } from '@/hooks/useDashboard';
+import { useState } from 'react';
 
 // Lazy-load recharts — defers heavy chart library off the initial bundle
 // rule: bundle-dynamic-imports
@@ -21,40 +23,33 @@ const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.Respons
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } };
 
-// Mock data for the chart
-const chartData = [
-  { name: 'Jan', revenue: 4000, profit: 2400 },
-  { name: 'Feb', revenue: 3000, profit: 1398 },
-  { name: 'Mar', revenue: 2000, profit: 9800 },
-  { name: 'Apr', revenue: 2780, profit: 3908 },
-  { name: 'May', revenue: 1890, profit: 4800 },
-  { name: 'Jun', revenue: 2390, profit: 3800 },
-  { name: 'Jul', revenue: 3490, profit: 4300 },
-];
+// Revenue analytics are now computed dynamically from useDashboardStats()
+
 
 export default function ReportsPage() {
-  const { data: salesData, isLoading: ls } = useInvoices({ type: 'sale', pageSize: 200 });
-  const { data: purchaseData, isLoading: lp } = useInvoices({ type: 'purchase', pageSize: 200 });
+  const [range, setRange] = useState<TimeRange>('6months');
+  const { data: stats, isLoading: lstats } = useDashboardStats(range);
   const { data: productsData, isLoading: lprod } = useProducts({ pageSize: 200 });
   const { data: partiesData, isLoading: lpar } = useParties({ pageSize: 200 });
-  const isLoading = ls || lp || lprod || lpar;
+  const isLoading = (lstats && !stats) || lprod || lpar;
 
-  const sales = salesData?.invoices || [];
-  const purchases = purchaseData?.invoices || [];
   const products = productsData?.products || [];
   const parties = partiesData?.parties || [];
+  const salesCount = stats?.salesCount || 0;
+  const purchasesCount = stats?.purchasesCount || 0;
 
-  const totalSales = sales.reduce((s, i) => s + (i.totalAmount || 0), 0);
-  const totalPurchases = purchases.reduce((s, i) => s + (i.totalAmount || 0), 0);
+  const totalSales = stats?.totalSales || 0;
+  const totalPurchases = stats?.totalPurchases || 0;
+
   const lowStock = products.filter((p) => (p.currentStock || 0) > 0 && (p.currentStock || 0) < 20);
 
   const reports = [
-    { title: 'Sales Summary', desc: `${sales.length} invoices`, value: formatCurrency(totalSales), icon: LuTrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-    { title: 'Purchase Summary', desc: `${purchases.length} bills`, value: formatCurrency(totalPurchases), icon: LuFileText, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+    { title: 'Sales Summary', desc: `${salesCount} invoices`, value: formatCurrency(totalSales), icon: LuTrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+    { title: 'Purchase Summary', desc: `${purchasesCount} bills`, value: formatCurrency(totalPurchases), icon: LuFileText, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
     { title: 'Inventory Report', desc: `${products.length} products`, value: `${lowStock.length} low stock`, icon: LuPackage, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
     { title: 'Party Ledger', desc: `${parties.length} parties`, value: 'Receivables & payables', icon: LuUsers, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' },
     { title: 'Profit & Loss', desc: 'Revenue vs expenses', value: formatCurrency(totalSales - totalPurchases), icon: LuChartBar, color: totalSales >= totalPurchases ? 'text-emerald-600' : 'text-red-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
-    { title: 'GST Report', desc: 'Tax summary', value: formatCurrency(sales.reduce((s, i) => s + (i.cgstAmount || 0) + (i.sgstAmount || 0), 0)), icon: LuFileText, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+    { title: 'GST Report', desc: 'Tax summary', value: formatCurrency(stats?.totalSalesTax || 0), icon: LuFileText, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
   ];
 
   return (
@@ -86,13 +81,21 @@ export default function ReportsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">Revenue Overview</h2>
-              <p className="text-sm text-gray-500 mt-1">Monthly revenue vs profit</p>
+              <p className="text-sm text-gray-500 mt-1">
+                {(range === '7days' || range === '30days') ? 'Daily' : 'Monthly'} revenue vs profit
+              </p>
             </div>
             <div className="flex items-center gap-2">
-              <button className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <LuCalendar className="w-4 h-4 text-gray-500" />
-                This Year
-              </button>
+              <select 
+                value={range} 
+                onChange={(e) => setRange(e.target.value as TimeRange)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors outline-none"
+              >
+                <option value="7days">Last 7 days</option>
+                <option value="30days">Last 30 days</option>
+                <option value="6months">Last 6 months</option>
+                <option value="thisYear">This Year</option>
+              </select>
               <button className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 <LuDownload className="w-4 h-4 text-gray-500" />
                 Export
@@ -101,7 +104,7 @@ export default function ReportsPage() {
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={stats?.chartData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
