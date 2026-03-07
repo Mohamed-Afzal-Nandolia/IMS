@@ -9,8 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@insforge/nextjs": "^1.1.7",
-    "@insforge/sdk": "^1.1.6-dev.0",
     "@tanstack/react-query": "^5.90.21",
     "axios": "^1.13.6",
     "clsx": "^2.1.1",

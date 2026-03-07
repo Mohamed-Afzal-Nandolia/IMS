@@ -3,51 +3,44 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 
+// Backend returns camelCase fields (Spring Boot default Jackson serialization)
 export interface Product {
     id: string;
-    business_id: string;
     name: string;
     sku: string;
-    hsn_code: string;
-    sac_code: string;
-    category_id: string | null;
+    hsnCode: string;
+    sacCode: string;
     unit: string;
-    selling_price: number;
-    sellingPrice?: number;
-    purchase_price: number;
-    purchasePrice?: number;
+    sellingPrice: number;
+    purchasePrice: number;
     mrp: number;
-    gst_rate: number;
-    cess_rate: number;
-    current_stock?: number;
-    currentStock?: number;
-    opening_stock?: number;
-    openingStock?: number;
-    min_stock_level?: number;
-    minStockLevel?: number;
+    gstRate: number;
+    cessRate: number;
+    currentStock: number;
+    openingStock: number;
+    minStockLevel: number;
     description: string;
-    is_active?: boolean;
-    isActive?: boolean;
-    created_at?: string;
-    createdAt?: string;
-    updated_at?: string;
-    updatedAt?: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
     category?: { id: string; name: string } | null;
 }
 
+// Form data uses camelCase to match what backend expects on POST/PATCH
 export interface ProductFormData {
     name: string;
     sku?: string;
-    hsn_code?: string;
-    category_id?: string | null;
+    hsnCode?: string;
     unit?: string;
-    selling_price: number;
-    purchase_price: number;
-    gst_rate?: number;
-    current_stock?: number;
-    min_stock_level?: number;
+    sellingPrice: number;
+    purchasePrice: number;
+    gstRate?: number;
+    currentStock?: number;
+    minStockLevel?: number;
     description?: string;
-    is_active?: boolean;
+    isActive?: boolean;
+    // category_id is a UI-only helper; mapped to category object below
+    category_id?: string | null;
     category?: { id: string } | null;
 }
 
@@ -76,17 +69,19 @@ export function useProducts(options: UseProductsOptions = {}) {
                 filtered = filtered.filter(p => p.category?.id === category);
             }
             if (stockFilter === 'low_stock') {
-                filtered = filtered.filter(p => (p.current_stock || p.currentStock || 0) > 0 && (p.current_stock || p.currentStock || 0) < 20);
+                filtered = filtered.filter(p => (p.currentStock || 0) > 0 && (p.currentStock || 0) < 20);
             } else if (stockFilter === 'in_stock') {
-                filtered = filtered.filter(p => (p.current_stock || p.currentStock || 0) > 0);
+                filtered = filtered.filter(p => (p.currentStock || 0) > 0);
             } else if (stockFilter === 'out_of_stock') {
-                filtered = filtered.filter(p => (p.current_stock || p.currentStock || 0) <= 0);
+                filtered = filtered.filter(p => (p.currentStock || 0) <= 0);
             }
 
             const total = filtered.length;
             const from = (page - 1) * pageSize;
             const to = from + pageSize;
-            const paginated = filtered.slice(from, to).sort((a, b) => new Date((b.createdAt || b.created_at) as string).getTime() - new Date((a.createdAt || a.created_at) as string).getTime());
+            const paginated = filtered
+                .slice(from, to)
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
             return { products: paginated, total };
         },
@@ -98,7 +93,6 @@ export function useProduct(id: string | null) {
         queryKey: ['product', id],
         queryFn: async () => {
             if (!id) return null;
-            // The backend doesn't have a single GET id currently, so fetch all and find
             const { data } = await api.get<Product[]>('/products');
             const found = data.find((p) => p.id === id);
             if (!found) throw new Error('Product not found');
@@ -112,10 +106,11 @@ export function useCreateProduct() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (product: ProductFormData) => {
-            // Map category_id to category object for the backend request
-            const payload = { ...product };
-            if (payload.category_id) {
-                payload.category = { id: payload.category_id };
+            // Build payload in camelCase for the backend
+            const { category_id, ...rest } = product;
+            const payload: any = { ...rest };
+            if (category_id) {
+                payload.category = { id: category_id };
             }
             const { data } = await api.post<Product>('/products', payload);
             return data;
@@ -131,10 +126,11 @@ export function useUpdateProduct() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async ({ id, ...values }: ProductFormData & { id: string }) => {
-            const payload = { ...values };
-            if (payload.category_id) {
-                payload.category = { id: payload.category_id };
-            } else if (payload.category_id === null) {
+            const { category_id, ...rest } = values;
+            const payload: any = { ...rest };
+            if (category_id) {
+                payload.category = { id: category_id };
+            } else if (category_id === null) {
                 payload.category = null;
             }
             const { data } = await api.patch<Product>(`/products/${id}`, payload);

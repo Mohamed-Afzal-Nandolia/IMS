@@ -32,7 +32,7 @@ export default function PurchasesPage() {
 
   const invoices = data?.invoices || [];
   const total = data?.total || 0;
-  const totalPurchases = invoices.reduce((s, i) => s + (i.total_amount || 0), 0);
+  const totalPurchases = invoices.reduce((s, i) => s + (i.totalAmount || 0), 0);
 
   const handleDelete = async (id: string) => {
     try { await deleteInvoice.mutateAsync(id); addToast({ type: 'success', title: 'Deleted' }); setDeleteConfirm(null); }
@@ -79,10 +79,10 @@ export default function PurchasesPage() {
               <tbody>
                 {invoices.map((inv) => (
                   <tr key={inv.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
-                    <td className="px-5 py-3 font-semibold text-indigo-600">{inv.invoice_number}</td>
+                    <td className="px-5 py-3 font-semibold text-indigo-600">{inv.invoiceNumber}</td>
                     <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{inv.party?.name || '—'}</td>
-                    <td className="px-5 py-3 text-gray-500">{new Date(inv.invoice_date).toLocaleDateString('en-IN')}</td>
-                    <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">{formatCurrency(inv.total_amount)}</td>
+                    <td className="px-5 py-3 text-gray-500">{new Date(inv.issueDate).toLocaleDateString('en-IN')}</td>
+                    <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white tabnum">{formatCurrency(inv.totalAmount)}</td>
                     <td className="px-5 py-3 text-center"><span className={`px-2.5 py-1 rounded-lg text-xs font-semibold capitalize ${statusColors[inv.status] || ''}`}>{inv.status.replace('_', ' ')}</span></td>
                     <td className="px-5 py-3"><div className="flex items-center justify-center gap-1">
                       <button onClick={() => setViewInvoice(inv)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-indigo-600"><LuEye className="w-4 h-4" /></button>
@@ -100,10 +100,13 @@ export default function PurchasesPage() {
         {viewInvoice && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setViewInvoice(null)}>
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
-              <div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold text-gray-900 dark:text-white">Purchase {viewInvoice.invoice_number}</h2><button onClick={() => setViewInvoice(null)} className="p-2 rounded-xl hover:bg-gray-100"><LuX className="w-5 h-5" /></button></div>
+              <div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold text-gray-900 dark:text-white">Purchase {viewInvoice.invoiceNumber}</h2><button onClick={() => setViewInvoice(null)} className="p-2 rounded-xl hover:bg-gray-100"><LuX className="w-5 h-5" /></button></div>
               <div className="space-y-3 text-sm">
-                {[['Supplier', viewInvoice.party?.name || '—'], ['Date', new Date(viewInvoice.invoice_date).toLocaleDateString('en-IN')], ['Total', formatCurrency(viewInvoice.total_amount)], ['Paid', formatCurrency(viewInvoice.amount_paid || 0)], ['Status', viewInvoice.status]].map(([l, v]) => (
-                  <div key={l} className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700/50"><span className="text-gray-500">{l}</span><span className="font-medium text-gray-900 dark:text-white capitalize">{v}</span></div>
+                {[['Supplier', viewInvoice.party?.name || '—'], ['Date', new Date(viewInvoice.issueDate).toLocaleDateString('en-IN')], ['Total', formatCurrency(viewInvoice.totalAmount)], ['Paid', formatCurrency(viewInvoice.amountPaid || 0)], ['Status', viewInvoice.status]].map(([l, v]) => (
+                  <div key={l} className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-100 dark:border-gray-700/50 gap-1 sm:gap-4">
+                    <span className="text-gray-500 min-w-[100px] shrink-0">{l}</span>
+                    <span className="font-medium text-gray-900 dark:text-white capitalize text-right break-words whitespace-pre-wrap max-w-full">{v}</span>
+                  </div>
                 ))}
               </div>
             </motion.div>

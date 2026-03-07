@@ -3,21 +3,23 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 
+// Backend returns camelCase fields (Spring Boot default Jackson serialization)
 export interface Category {
     id: string;
-    business_id: string;
     name: string;
     description: string;
-    parent_id: string | null;
-    is_active: boolean;
-    created_at: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+    parent?: { id: string; name: string } | null;
 }
 
+// Form data in camelCase to match backend expectations
 export interface CategoryFormData {
     name: string;
     description?: string;
-    parent_id?: string | null;
-    is_active?: boolean;
+    isActive?: boolean;
+    parent?: { id: string } | null;
 }
 
 export function useCategories() {

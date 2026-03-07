@@ -20,8 +20,8 @@ export function useDashboardStats() {
             const products = Array.isArray(productsRes.data) ? productsRes.data : [];
             const parties = Array.isArray(partiesRes.data) ? partiesRes.data : [];
 
-            const totalSales = sales.reduce((sum: number, inv: any) => sum + (inv.totalAmount || inv.total_amount || 0), 0);
-            const totalPurchases = purchases.reduce((sum: number, inv: any) => sum + (inv.totalAmount || inv.total_amount || 0), 0);
+            const totalSales = sales.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
+            const totalPurchases = purchases.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
 
             const lowStockItems = products
                 .filter((p: any) => p.currentStock > 0 && p.currentStock < 20)
@@ -29,7 +29,7 @@ export function useDashboardStats() {
                 .slice(0, 10);
 
             const recentInvoices = [...sales, ...purchases]
-                .sort((a: any, b: any) => new Date(b.createdAt || b.created_at).getTime() - new Date(a.createdAt || a.created_at).getTime())
+                .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .slice(0, 5);
 
             return {

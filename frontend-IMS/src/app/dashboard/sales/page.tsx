@@ -36,8 +36,8 @@ export default function SalesPage() {
   const invoices = data?.invoices || [];
   const total = data?.total || 0;
 
-  const totalSales = invoices.reduce((s, i) => s + (i.total_amount || 0), 0);
-  const totalPaid = invoices.reduce((s, i) => s + (i.amount_paid || 0), 0);
+  const totalSales = invoices.reduce((s, i) => s + (i.totalAmount || 0), 0);
+  const totalPaid = invoices.reduce((s, i) => s + (i.amountPaid || 0), 0);
 
   const handleDelete = async (id: string) => {
     try { await deleteInvoice.mutateAsync(id); addToast({ type: 'success', title: 'Invoice Deleted' }); setDeleteConfirm(null); }
@@ -113,11 +113,11 @@ export default function SalesPage() {
               <tbody>
                 {invoices.map((inv) => (
                   <tr key={inv.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
-                    <td className="px-5 py-3 font-semibold text-indigo-600 dark:text-indigo-400">{inv.invoice_number}</td>
+                    <td className="px-5 py-3 font-semibold text-indigo-600 dark:text-indigo-400">{inv.invoiceNumber}</td>
                     <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{inv.party?.name || '—'}</td>
-                    <td className="px-5 py-3 text-gray-500">{new Date(inv.invoice_date).toLocaleDateString('en-IN')}</td>
-                    <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">{formatCurrency(inv.total_amount)}</td>
-                    <td className="px-5 py-3 text-right text-gray-500">{formatCurrency(inv.amount_paid || 0)}</td>
+                    <td className="px-5 py-3 text-gray-500">{new Date(inv.issueDate).toLocaleDateString('en-IN')}</td>
+                    <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white tabnum">{formatCurrency(inv.totalAmount)}</td>
+                    <td className="px-5 py-3 text-right text-gray-500 tabnum">{formatCurrency(inv.amountPaid || 0)}</td>
                     <td className="px-5 py-3 text-center">
                       <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold capitalize ${statusColors[inv.status] || ''}`}>{inv.status.replace('_', ' ')}</span>
                     </td>
@@ -141,20 +141,20 @@ export default function SalesPage() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setViewInvoice(null)}>
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Invoice {viewInvoice.invoice_number}</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Invoice {viewInvoice.invoiceNumber}</h2>
                 <button onClick={() => setViewInvoice(null)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700"><LuX className="w-5 h-5" /></button>
               </div>
               <div className="space-y-3 text-sm">
-                {[['Party', viewInvoice.party?.name || '—'], ['Date', new Date(viewInvoice.invoice_date).toLocaleDateString('en-IN')],
-                  ['Due Date', viewInvoice.due_date ? new Date(viewInvoice.due_date).toLocaleDateString('en-IN') : '—'],
-                  ['Subtotal', formatCurrency(viewInvoice.subtotal)], ['CGST', formatCurrency(viewInvoice.cgst_amount)],
-                  ['SGST', formatCurrency(viewInvoice.sgst_amount)], ['IGST', formatCurrency(viewInvoice.igst_amount)],
-                  ['Total', formatCurrency(viewInvoice.total_amount)], ['Paid', formatCurrency(viewInvoice.amount_paid || 0)],
+                {[['Party', viewInvoice.party?.name || '—'], ['Date', new Date(viewInvoice.issueDate).toLocaleDateString('en-IN')],
+                  ['Due Date', viewInvoice.dueDate ? new Date(viewInvoice.dueDate).toLocaleDateString('en-IN') : '—'],
+                  ['Subtotal', formatCurrency(viewInvoice.subtotal)], ['CGST', formatCurrency(viewInvoice.cgstAmount)],
+                  ['SGST', formatCurrency(viewInvoice.sgstAmount)], ['IGST', formatCurrency(viewInvoice.igstAmount)],
+                  ['Total', formatCurrency(viewInvoice.totalAmount)], ['Paid', formatCurrency(viewInvoice.amountPaid || 0)],
                   ['Status', viewInvoice.status], ['Notes', viewInvoice.notes || '—'],
                 ].map(([l, v]) => (
-                  <div key={l} className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700/50">
-                    <span className="text-gray-500">{l}</span>
-                    <span className="font-medium text-gray-900 dark:text-white capitalize">{v}</span>
+                  <div key={l} className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-100 dark:border-gray-700/50 gap-1 sm:gap-4">
+                    <span className="text-gray-500 min-w-[100px] shrink-0">{l}</span>
+                    <span className="font-medium text-gray-900 dark:text-white capitalize text-right break-words whitespace-pre-wrap max-w-full">{v}</span>
                   </div>
                 ))}
               </div>
@@ -200,41 +200,41 @@ function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClo
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<InvoiceItem[]>([]);
 
-  const addItem = () => setItems([...items, { product_id: '', quantity: 1, unit_price: 0, discount: 0, gst_rate: 18, gst_amount: 0, total: 0 }]);
+  const addItem = () => setItems([...items, { productId: '', quantity: 1, unitPrice: 0, taxRate: 18, taxAmount: 0, totalPrice: 0 }]);
 
   const updateItem = (index: number, field: string, value: any) => {
     const updated = [...items];
     (updated[index] as any)[field] = value;
 
-    if (field === 'product_id' && productsData?.products) {
+    if (field === 'productId' && productsData?.products) {
       const product = productsData.products.find((p) => p.id === value);
       if (product) {
-        updated[index].unit_price = product.selling_price;
-        updated[index].gst_rate = product.gst_rate;
-        updated[index].product_name = product.name;
+        updated[index].unitPrice = product.sellingPrice || 0;
+        updated[index].taxRate = product.gstRate || 0;
+        updated[index].productName = product.name;
       }
     }
 
     const itm = updated[index];
-    const subtotal = itm.quantity * itm.unit_price - itm.discount;
-    itm.gst_amount = subtotal * itm.gst_rate / 100;
-    itm.total = subtotal + itm.gst_amount;
+    const subtotal = itm.quantity * itm.unitPrice;
+    itm.taxAmount = subtotal * itm.taxRate / 100;
+    itm.totalPrice = subtotal + itm.taxAmount;
     setItems(updated);
   };
 
   const removeItem = (index: number) => setItems(items.filter((_, i) => i !== index));
 
-  const subtotal = items.reduce((s, i) => s + i.quantity * i.unit_price - i.discount, 0);
-  const totalGst = items.reduce((s, i) => s + i.gst_amount, 0);
+  const subtotal = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+  const totalGst = items.reduce((s, i) => s + i.taxAmount, 0);
   const grandTotal = subtotal + totalGst;
 
   const handleSubmit = async () => {
     if (!partyId || items.length === 0) { addToast({ type: 'warning', title: 'Missing data', message: 'Select a party and add items' }); return; }
     try {
       await createInvoice.mutateAsync({
-        invoice_type: invoiceType, party_id: partyId, invoice_date: invoiceDate, due_date: dueDate || invoiceDate,
-        subtotal, discount_amount: items.reduce((s, i) => s + i.discount, 0),
-        cgst_amount: totalGst / 2, sgst_amount: totalGst / 2, igst_amount: 0, total_amount: grandTotal,
+        type: invoiceType, partyId: partyId, issueDate: invoiceDate, dueDate: dueDate || invoiceDate,
+        subtotal,
+        cgstAmount: totalGst / 2, sgstAmount: totalGst / 2, igstAmount: 0, totalAmount: grandTotal,
         status: 'draft', notes, items,
       });
       addToast({ type: 'success', title: 'Invoice Created' });
@@ -285,16 +285,16 @@ function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClo
                 <div key={idx} className="grid grid-cols-12 gap-2 items-end bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">
                   <div className="col-span-4">
                     <label className="text-xs text-gray-500">Product</label>
-                    <select value={itm.product_id} onChange={(e) => updateItem(idx, 'product_id', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none">
+                    <select value={itm.productId} onChange={(e) => updateItem(idx, 'productId', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none">
                       <option value="">Select</option>
                       {(productsData?.products || []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                   </div>
-                  <div className="col-span-1"><label className="text-xs text-gray-500">Qty</label><input type="number" min="1" value={itm.quantity} onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))} className="w-full px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm" /></div>
-                  <div className="col-span-2"><label className="text-xs text-gray-500">Price</label><input type="number" value={itm.unit_price} onChange={(e) => updateItem(idx, 'unit_price', Number(e.target.value))} className="w-full px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm" /></div>
-                  <div className="col-span-1"><label className="text-xs text-gray-500">GST%</label><input type="number" value={itm.gst_rate} onChange={(e) => updateItem(idx, 'gst_rate', Number(e.target.value))} className="w-full px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm" /></div>
+                  <div className="col-span-1"><label className="text-xs text-gray-500">Qty</label><input type="number" min="1" value={itm.quantity} onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))} className="w-full px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm tabnum" /></div>
+                  <div className="col-span-2"><label className="text-xs text-gray-500">Price</label><input type="number" value={itm.unitPrice} onChange={(e) => updateItem(idx, 'unitPrice', Number(e.target.value))} className="w-full px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm tabnum" /></div>
+                  <div className="col-span-1"><label className="text-xs text-gray-500">GST%</label><input type="number" value={itm.taxRate} onChange={(e) => updateItem(idx, 'taxRate', Number(e.target.value))} className="w-full px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm tabnum" /></div>
                   <div className="col-span-3 flex items-end gap-2">
-                    <div className="flex-1"><label className="text-xs text-gray-500">Total</label><p className="font-semibold text-sm text-gray-900 dark:text-white py-2">{formatCurrency(itm.total)}</p></div>
+                    <div className="flex-1"><label className="text-xs text-gray-500">Total</label><p className="font-semibold text-sm text-gray-900 dark:text-white py-2 tabnum">{formatCurrency(itm.totalPrice)}</p></div>
                     <button onClick={() => removeItem(idx)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><LuX className="w-4 h-4" /></button>
                   </div>
                 </div>
@@ -303,12 +303,18 @@ function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClo
           )}
         </div>
 
-        {/* Totals */}
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
-          <div className="flex justify-between text-sm"><span className="text-gray-500">Subtotal</span><span className="font-medium">{formatCurrency(subtotal)}</span></div>
-          <div className="flex justify-between text-sm"><span className="text-gray-500">CGST</span><span>{formatCurrency(totalGst / 2)}</span></div>
-          <div className="flex justify-between text-sm"><span className="text-gray-500">SGST</span><span>{formatCurrency(totalGst / 2)}</span></div>
-          <div className="flex justify-between text-base font-bold border-t pt-2"><span>Grand Total</span><span className="text-indigo-600">{formatCurrency(grandTotal)}</span></div>
+        {/* Totals & Notes */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Additional Notes</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Enter any notes for this invoice..." rows={3} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none resize-none" />
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm"><span className="text-gray-500">Subtotal</span><span className="font-medium tabnum">{formatCurrency(subtotal)}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-gray-500">CGST</span><span className="tabnum">{formatCurrency(totalGst / 2)}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-gray-500">SGST</span><span className="tabnum">{formatCurrency(totalGst / 2)}</span></div>
+            <div className="flex justify-between text-base font-bold border-t pt-2 mt-2"><span>Grand Total</span><span className="text-indigo-600 tabnum">{formatCurrency(grandTotal)}</span></div>
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-6 mt-4 border-t border-gray-100 dark:border-gray-700">

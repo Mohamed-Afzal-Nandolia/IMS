@@ -5,7 +5,7 @@ import api from '@/lib/api';
 
 export interface Party {
     id: string;
-    business_id: string;
+    businessId: string;
     name: string;
     type: string;
     gstin: string;
@@ -15,11 +15,14 @@ export interface Party {
     city: string;
     state: string;
     pincode: string;
-    opening_balance: number;
-    credit_limit: number;
-    is_active: boolean;
-    created_at: string;
-    updated_at: string;
+    openingBalance: number;
+    creditLimit: number;
+    billingAddress?: string;
+    shippingAddress?: string;
+    currentBalance: number;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface PartyFormData {
@@ -32,9 +35,11 @@ export interface PartyFormData {
     city?: string;
     state?: string;
     pincode?: string;
-    opening_balance?: number;
-    credit_limit?: number;
-    is_active?: boolean;
+    billingAddress?: string;
+    shippingAddress?: string;
+    openingBalance?: number;
+    creditLimit?: number;
+    isActive?: boolean;
 }
 
 interface UsePartiesOptions {

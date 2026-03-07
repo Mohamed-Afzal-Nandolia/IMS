@@ -3,10 +3,20 @@
 import { motion } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils';
 import { LuChartBar, LuLoader, LuTrendingUp, LuPackage, LuUsers, LuFileText, LuDownload, LuCalendar } from 'react-icons/lu';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import dynamic from 'next/dynamic';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useProducts } from '@/hooks/useProducts';
 import { useParties } from '@/hooks/useParties';
+
+// Lazy-load recharts — defers heavy chart library off the initial bundle
+// rule: bundle-dynamic-imports
+const AreaChart = dynamic(() => import('recharts').then(m => m.AreaChart), { ssr: false });
+const Area = dynamic(() => import('recharts').then(m => m.Area), { ssr: false });
+const XAxis = dynamic(() => import('recharts').then(m => m.XAxis), { ssr: false });
+const YAxis = dynamic(() => import('recharts').then(m => m.YAxis), { ssr: false });
+const CartesianGrid = dynamic(() => import('recharts').then(m => m.CartesianGrid), { ssr: false });
+const Tooltip = dynamic(() => import('recharts').then(m => m.Tooltip), { ssr: false });
+const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.ResponsiveContainer), { ssr: false });
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } };
@@ -34,9 +44,9 @@ export default function ReportsPage() {
   const products = productsData?.products || [];
   const parties = partiesData?.parties || [];
 
-  const totalSales = sales.reduce((s, i) => s + (i.total_amount || 0), 0);
-  const totalPurchases = purchases.reduce((s, i) => s + (i.total_amount || 0), 0);
-  const lowStock = products.filter((p) => (p.current_stock || p.currentStock || 0) > 0 && (p.current_stock || p.currentStock || 0) < 20);
+  const totalSales = sales.reduce((s, i) => s + (i.totalAmount || 0), 0);
+  const totalPurchases = purchases.reduce((s, i) => s + (i.totalAmount || 0), 0);
+  const lowStock = products.filter((p) => (p.currentStock || 0) > 0 && (p.currentStock || 0) < 20);
 
   const reports = [
     { title: 'Sales Summary', desc: `${sales.length} invoices`, value: formatCurrency(totalSales), icon: LuTrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
@@ -44,7 +54,7 @@ export default function ReportsPage() {
     { title: 'Inventory Report', desc: `${products.length} products`, value: `${lowStock.length} low stock`, icon: LuPackage, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
     { title: 'Party Ledger', desc: `${parties.length} parties`, value: 'Receivables & payables', icon: LuUsers, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' },
     { title: 'Profit & Loss', desc: 'Revenue vs expenses', value: formatCurrency(totalSales - totalPurchases), icon: LuChartBar, color: totalSales >= totalPurchases ? 'text-emerald-600' : 'text-red-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
-    { title: 'GST Report', desc: 'Tax summary', value: formatCurrency(sales.reduce((s, i) => s + (i.cgst_amount || 0) + (i.sgst_amount || 0), 0)), icon: LuFileText, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+    { title: 'GST Report', desc: 'Tax summary', value: formatCurrency(sales.reduce((s, i) => s + (i.cgstAmount || 0) + (i.sgstAmount || 0), 0)), icon: LuFileText, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
   ];
 
   return (

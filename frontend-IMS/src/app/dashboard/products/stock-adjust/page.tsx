@@ -63,14 +63,14 @@ export default function StockAdjustPage() {
                 <tr key={p.id} className="border-b border-gray-50 dark:border-gray-800">
                   <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">{p.name}</td>
                   <td className="px-5 py-3 text-gray-500 font-mono text-xs">{p.sku}</td>
-                  <td className="px-5 py-3 text-center font-semibold">{p.current_stock || p.currentStock} {p.unit}</td>
+                  <td className="px-5 py-3 text-center font-semibold tabnum">{p.currentStock} {p.unit}</td>
                   <td className="px-5 py-3"><div className="flex items-center justify-center gap-2">
                     <button onClick={() => setAdjustments((prev) => ({ ...prev, [p.id]: (prev[p.id] || 0) - 1 }))} className="p-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-100"><LuMinus className="w-4 h-4" /></button>
-                    <input type="number" value={adjustments[p.id] || 0} onChange={(e) => setAdjustments((prev) => ({ ...prev, [p.id]: Number(e.target.value) }))} className="w-16 text-center px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm" />
+                    <input type="number" inputMode="numeric" value={adjustments[p.id] || 0} onChange={(e) => setAdjustments((prev) => ({ ...prev, [p.id]: Number(e.target.value) }))} className="w-16 text-center px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm tabnum" />
                     <button onClick={() => setAdjustments((prev) => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))} className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-100"><LuPlus className="w-4 h-4" /></button>
                   </div></td>
                   <td className="px-5 py-3 text-center">
-                    <button disabled={!adjustments[p.id] || saving} onClick={() => handleAdjust(p.id, p.current_stock || p.currentStock || 0, adjustments[p.id] || 0)} className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold disabled:opacity-30 hover:bg-indigo-700">Apply</button>
+                    <button disabled={!adjustments[p.id] || saving} onClick={() => handleAdjust(p.id, p.currentStock || 0, adjustments[p.id] || 0)} className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold disabled:opacity-30 hover:bg-indigo-700">Apply</button>
                   </td>
                 </tr>
               ))}

@@ -4,11 +4,21 @@ import { motion } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils';
 import {
   LuTrendingUp, LuShoppingCart, LuPackage, LuUsers, LuIndianRupee,
-  LuTriangleAlert, LuLoader, LuArrowUpRight, LuArrowDownRight,
+  LuTriangleAlert, LuLoader, LuArrowUpRight,
 } from 'react-icons/lu';
 import { useDashboardStats } from '@/hooks/useDashboard';
 import Link from 'next/link';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import dynamic from 'next/dynamic';
+
+// Lazy-load recharts — heavy chart library, not needed for initial render
+// rule: bundle-dynamic-imports — defers ~200KB of chart code
+const AreaChart = dynamic(() => import('recharts').then(m => m.AreaChart), { ssr: false });
+const Area = dynamic(() => import('recharts').then(m => m.Area), { ssr: false });
+const XAxis = dynamic(() => import('recharts').then(m => m.XAxis), { ssr: false });
+const YAxis = dynamic(() => import('recharts').then(m => m.YAxis), { ssr: false });
+const CartesianGrid = dynamic(() => import('recharts').then(m => m.CartesianGrid), { ssr: false });
+const Tooltip = dynamic(() => import('recharts').then(m => m.Tooltip), { ssr: false });
+const ResponsiveContainer = dynamic(() => import('recharts').then(m => m.ResponsiveContainer), { ssr: false });
 
 // Mock data for the chart since the backend might not have this aggregation yet
 const chartData = [
@@ -153,10 +163,10 @@ export default function DashboardPage() {
                 <div key={p.id} className="px-5 py-3 flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{p.name}</p>
-                    <p className="text-xs text-gray-400">Min: {p.min_stock_level} {p.unit}</p>
+                    <p className="text-xs text-gray-400">Min: {p.minStockLevel} {p.unit}</p>
                   </div>
-                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400">
-                    {p.current_stock} {p.unit}
+                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 tabnum">
+                    {p.currentStock} {p.unit}
                   </span>
                 </div>
               ))}

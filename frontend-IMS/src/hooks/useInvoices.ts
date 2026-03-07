@@ -5,53 +5,49 @@ import api from '@/lib/api';
 
 export interface InvoiceItem {
     id?: string;
-    product_id: string;
-    product_name?: string;
+    productId: string;
+    productName?: string;
     quantity: number;
-    unit_price: number;
-    discount: number;
-    gst_rate: number;
-    gst_amount: number;
-    total: number;
+    unitPrice: number;
+    taxRate: number;
+    taxAmount: number;
+    totalPrice: number;
     product?: { id: string; name: string };
 }
 
 export interface Invoice {
     id: string;
-    business_id: string;
-    invoice_number: string;
-    invoice_type: string;
+    businessId: string;
+    invoiceNumber: string;
     type: string;
-    party_id: string;
-    invoice_date: string;
-    due_date: string;
+    partyId: string;
+    issueDate: string;
+    dueDate: string;
     subtotal: number;
-    discount_amount: number;
-    cgst_amount: number;
-    sgst_amount: number;
-    igst_amount: number;
-    total_amount: number;
-    amount_paid: number;
+    cgstAmount: number;
+    sgstAmount: number;
+    igstAmount: number;
+    totalAmount: number;
+    amountPaid?: number;
     status: string;
     notes: string;
-    created_at: string;
-    updated_at: string;
+    createdAt: string;
+    updatedAt: string;
     party?: { id: string; name: string; gstin: string } | null;
-    invoice_items?: InvoiceItem[];
+    items?: InvoiceItem[];
 }
 
 export interface InvoiceFormData {
-    invoice_type: string;
-    party_id: string;
-    invoice_date: string;
-    due_date: string;
+    type: string;
+    partyId: string;
+    issueDate: string;
+    dueDate: string;
     subtotal: number;
-    discount_amount: number;
-    cgst_amount: number;
-    sgst_amount: number;
-    igst_amount: number;
-    total_amount: number;
-    amount_paid?: number;
+    cgstAmount: number;
+    sgstAmount: number;
+    igstAmount: number;
+    totalAmount: number;
+    amountPaid?: number;
     status?: string;
     notes?: string;
     items: InvoiceItem[];
@@ -82,21 +78,15 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
             }
             if (search) {
                 const searchLower = search.toLowerCase();
-                filtered = filtered.filter(i => i.invoice_number?.toLowerCase().includes(searchLower));
+                filtered = filtered.filter(i => i.invoiceNumber?.toLowerCase().includes(searchLower));
             }
 
             const total = filtered.length;
             const from = (page - 1) * pageSize;
             const to = from + pageSize;
-            const paginated = filtered.slice(from, to).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            const paginated = filtered.slice(from, to).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-            // Map frontend expectations
-            const mappedInvoices = paginated.map(inv => ({
-                ...inv,
-                invoice_type: inv.type, // Map 'type' to 'invoice_type' expected by frontend
-            }));
-
-            return { invoices: mappedInvoices, total };
+            return { invoices: paginated, total };
         },
     });
 }
@@ -105,33 +95,32 @@ export function useCreateInvoice() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (invoiceData: InvoiceFormData) => {
-            const { items, invoice_type, party_id, ...invoiceFields } = invoiceData;
+            const { items, type, partyId, ...invoiceFields } = invoiceData;
 
             // Generate invoice number
-            const prefix = invoice_type === 'sale' ? 'INV' :
-                invoice_type === 'purchase' ? 'PUR' :
-                    invoice_type === 'quotation' ? 'QUO' :
-                        invoice_type === 'sale_return' ? 'SRN' :
-                            invoice_type === 'purchase_return' ? 'PRN' :
-                                invoice_type === 'purchase_order' ? 'PO' : 'DOC';
+            const prefix = type === 'sale' ? 'INV' :
+                type === 'purchase' ? 'PUR' :
+                    type === 'quotation' ? 'QUO' :
+                        type === 'sale_return' ? 'SRN' :
+                            type === 'purchase_return' ? 'PRN' :
+                                type === 'purchase_order' ? 'PO' : 'DOC';
             const invoiceNumber = `${prefix}-${Date.now().toString(36).toUpperCase()}`;
 
             const payloadItems = items.map(item => ({
-                product: { id: item.product_id },
+                product: { id: item.productId },
                 quantity: item.quantity,
-                unitPrice: item.unit_price,
-                discount: item.discount || 0,
-                gstRate: item.gst_rate,
-                gstAmount: item.gst_amount,
-                total: item.total
+                unitPrice: item.unitPrice,
+                taxRate: item.taxRate,
+                taxAmount: item.taxAmount,
+                totalPrice: item.totalPrice
             }));
 
             const payload = {
                 invoice: {
                     ...invoiceFields,
-                    type: invoice_type,
+                    type,
                     invoiceNumber,
-                    party: { id: party_id }
+                    party: { id: partyId }
                 },
                 items: payloadItems
             };

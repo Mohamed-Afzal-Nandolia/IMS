@@ -1,6 +1,15 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+
+// Use next/font instead of CSS @import — eliminates render-blocking Google Fonts request,
+// self-hosts the font, and applies font-display:swap automatically
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'IMS Pro — Inventory Management & Billing',
@@ -11,7 +20,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={inter.variable}>
       <body className="min-h-screen bg-[var(--background)] text-[var(--foreground)] antialiased">
         <Providers>{children}</Providers>
       </body>
