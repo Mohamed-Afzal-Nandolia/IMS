@@ -2,10 +2,12 @@
 
 import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import api from '@/lib/api';
 
 interface Business {
   id: string;
   name: string;
+  slug: string;
   email?: string;
   phone?: string;
   gstin?: string;
@@ -49,12 +51,32 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const [businesses, setBusinesses] = useState<Business[]>([]);
 
   useEffect(() => {
-      if (businessId) {
-          // Dummy business info for now, as it's extracted implicitly in backend APIs
-          setCurrentBusiness({ id: businessId, name: 'My Business' });
-      } else {
-          setCurrentBusiness(null);
+    let isMounted = true;
+    
+    const loadBusiness = async () => {
+      try {
+        if (!businessId) {
+          if (isMounted) setCurrentBusiness(null);
+          return;
+        }
+
+        // We can fetch from backend to get the real business name and settings
+        const { data } = await api.get('/business');
+        if (isMounted) {
+          setCurrentBusiness(data);
+        }
+      } catch (err) {
+        console.error('Failed to load business profile', err);
+        // Fallback or handle later
+        if (isMounted) setCurrentBusiness({ id: businessId, name: 'Business' } as Business);
       }
+    };
+
+    loadBusiness();
+
+    return () => {
+      isMounted = false;
+    };
   }, [businessId]);
 
   const handleSetBusiness = useCallback((business: Business | null) => {
