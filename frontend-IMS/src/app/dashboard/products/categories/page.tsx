@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LuPlus, LuPencil, LuTrash2, LuFolder, LuX, LuLoader } from 'react-icons/lu';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory, type Category, type CategoryFormData } from '@/hooks/useCategories';
 import { useToast } from '@/components/ui/Toast';
+import { Portal } from '@/components/ui/Portal';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } };
@@ -82,6 +83,7 @@ export default function CategoriesPage() {
         )}
       </motion.div>
 
+      <Portal>
       <AnimatePresence>
         {showModal && <CategoryModal cat={editing} isSubmitting={createCat.isPending || updateCat.isPending} onSubmit={handleSubmit} onClose={() => { setShowModal(false); setEditing(null); }} />}
         {deleteId && (
@@ -98,6 +100,7 @@ export default function CategoriesPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      </Portal>
     </motion.div>
   );
 }

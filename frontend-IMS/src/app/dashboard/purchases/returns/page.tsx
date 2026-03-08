@@ -8,6 +8,7 @@ import { useInvoices, useDeleteInvoice, useCreateInvoice, type Invoice, type Inv
 import { useParties } from '@/hooks/useParties';
 import { useProducts } from '@/hooks/useProducts';
 import { useToast } from '@/components/ui/Toast';
+import { Portal } from '@/components/ui/Portal';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } };
@@ -120,6 +121,7 @@ export default function PurchaseReturnsPage() {
         )}
       </motion.div>
 
+      <Portal>
       {/* View Modal */}
       <AnimatePresence>
         {viewInvoice && (
@@ -146,7 +148,9 @@ export default function PurchaseReturnsPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      </Portal>
 
+      <Portal>
       {/* Delete Confirm */}
       <AnimatePresence>
         {deleteConfirm && (
@@ -168,6 +172,7 @@ export default function PurchaseReturnsPage() {
       <AnimatePresence>
         {showModal && <InvoiceFormModal invoiceType="purchase_return" onClose={() => setShowModal(false)} />}
       </AnimatePresence>
+      </Portal>
     </motion.div>
   );
 }

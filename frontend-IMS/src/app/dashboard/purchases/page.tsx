@@ -9,6 +9,7 @@ import { useParties } from '@/hooks/useParties';
 import { useProducts } from '@/hooks/useProducts';
 import { useToast } from '@/components/ui/Toast';
 import { AnimatePresence } from 'framer-motion';
+import { Portal } from '@/components/ui/Portal';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } };
@@ -102,6 +103,7 @@ export default function PurchasesPage() {
         )}
       </motion.div>
 
+      <Portal>
       <AnimatePresence>
         {viewInvoice && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setViewInvoice(null)}>
@@ -127,10 +129,13 @@ export default function PurchasesPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      </Portal>
 
+      <Portal>
       <AnimatePresence>
         {showModal && <InvoiceFormModal invoiceType="purchase" onClose={() => setShowModal(false)} />}
       </AnimatePresence>
+      </Portal>
     </motion.div>
   );
 }

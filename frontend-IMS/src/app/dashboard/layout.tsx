@@ -38,37 +38,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         )}
       </AnimatePresence>
 
-      {/* Main content */}
+      {/* Main content — plain div, no animation, so fixed modals work correctly */}
       <main
         style={{ marginLeft: sidebarCollapsed ? 72 : 260 }}
         className="min-h-screen hidden lg:block transition-[margin] duration-300 ease-out"
       >
         <Topbar onMenuClick={() => setMobileOpen(!mobileOpen)} />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="p-4 lg:p-6"
-        >
+        <div className="p-4 lg:p-6">
           <Suspense fallback={<DashboardLoading />}>
             {children}
           </Suspense>
-        </motion.div>
+        </div>
       </main>
 
       {/* Mobile main content */}
       <div className="lg:hidden">
         <Topbar onMenuClick={() => setMobileOpen(!mobileOpen)} />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="p-4"
-        >
+        <div className="p-4">
           <Suspense fallback={<DashboardLoading />}>
             {children}
           </Suspense>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
