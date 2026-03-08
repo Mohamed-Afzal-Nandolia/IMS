@@ -50,10 +50,10 @@ export default function GSTR3BPage() {
       <motion.div variants={item} className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 overflow-hidden">
         {isLoading ? <div className="flex items-center justify-center py-20"><LuLoader className="w-6 h-6 animate-spin text-indigo-500" /></div>
         : <table className="w-full text-sm">
-          <thead><tr className="text-left text-gray-500 border-b bg-gray-50/50"><th className="px-5 py-3 font-medium">Description</th><th className="px-5 py-3 text-right font-medium">Taxable Value</th><th className="px-5 py-3 text-right font-medium">CGST</th><th className="px-5 py-3 text-right font-medium">SGST</th><th className="px-5 py-3 text-right font-medium">IGST</th></tr></thead>
+          <thead><tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50"><th className="px-5 py-3 font-medium">Description</th><th className="px-5 py-3 text-right font-medium">Taxable Value</th><th className="px-5 py-3 text-right font-medium">CGST</th><th className="px-5 py-3 text-right font-medium">SGST</th><th className="px-5 py-3 text-right font-medium">IGST</th></tr></thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.label} className="border-b border-gray-50 dark:border-gray-800">
+              <tr key={r.label} className="border-b border-gray-100/50 dark:border-gray-800 text-gray-700 dark:text-gray-300">
                 <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">{r.label}</td>
                 <td className="px-5 py-3 text-right">{formatCurrency(r.taxable)}</td>
                 <td className="px-5 py-3 text-right">{formatCurrency(r.cgst)}</td>

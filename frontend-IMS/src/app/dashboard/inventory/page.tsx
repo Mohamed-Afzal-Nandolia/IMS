@@ -52,7 +52,7 @@ export default function InventoryPage() {
                 <h2 className="font-semibold text-gray-900 dark:text-white">Low Stock Alert ({lowStock.length})</h2>
               </div>
               <table className="w-full text-sm">
-                <thead><tr className="text-left text-gray-500 border-b bg-amber-50/50 dark:bg-amber-900/10"><th className="px-5 py-3">Product</th><th className="px-5 py-3">SKU</th><th className="px-5 py-3 text-center">Current Stock</th><th className="px-5 py-3 text-center">Min Stock</th></tr></thead>
+                <thead><tr className="text-left text-gray-500 dark:text-gray-400 border-b border-amber-100 dark:border-amber-700/50 bg-amber-50/50 dark:bg-amber-900/10"><th className="px-5 py-3">Product</th><th className="px-5 py-3">SKU</th><th className="px-5 py-3 text-center">Current Stock</th><th className="px-5 py-3 text-center">Min Stock</th></tr></thead>
                 <tbody>
                   {lowStock.map((p) => (
                     <tr key={p.id} className="border-b border-amber-50 dark:border-amber-900/20">
@@ -75,10 +75,10 @@ export default function InventoryPage() {
                 <h2 className="font-semibold text-gray-900 dark:text-white">Out of Stock ({outOfStock.length})</h2>
               </div>
               <table className="w-full text-sm">
-                <thead><tr className="text-left text-gray-500 border-b bg-red-50/50"><th className="px-5 py-3">Product</th><th className="px-5 py-3">SKU</th><th className="px-5 py-3">Category</th></tr></thead>
+                <thead><tr className="text-left text-gray-500 dark:text-gray-400 border-b border-red-100 dark:border-red-700/50 bg-red-50/50 dark:bg-red-900/10"><th className="px-5 py-3">Product</th><th className="px-5 py-3">SKU</th><th className="px-5 py-3">Category</th></tr></thead>
                 <tbody>
                   {outOfStock.map((p) => (
-                    <tr key={p.id} className="border-b border-red-50"><td className="px-5 py-3 font-medium">{p.name}</td><td className="px-5 py-3 text-gray-500">{p.sku}</td><td className="px-5 py-3 text-gray-500">{p.category?.name || '—'}</td></tr>
+                    <tr key={p.id} className="border-b border-red-50 dark:border-red-900/20 text-gray-700 dark:text-gray-300"><td className="px-5 py-3 font-medium text-gray-900 dark:text-white">{p.name}</td><td className="px-5 py-3 text-gray-500 dark:text-gray-400 font-mono text-xs">{p.sku}</td><td className="px-5 py-3 text-gray-500 dark:text-gray-400">{p.category?.name || '—'}</td></tr>
                   ))}
                 </tbody>
               </table>
@@ -86,14 +86,14 @@ export default function InventoryPage() {
           )}
 
           {/* All Stock */}
-          <motion.div variants={item} className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 overflow-hidden">
-            <div className="px-5 py-4 border-b"><h2 className="font-semibold text-gray-900 dark:text-white">All Products Stock</h2></div>
+          <motion.div variants={item} className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 overflow-hidden text-gray-900 dark:text-gray-100">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800"><h2 className="font-semibold text-gray-900 dark:text-white">All Products Stock</h2></div>
             {products.length === 0 ? <div className="text-center py-12"><p className="text-gray-500">No products. Add products to track inventory.</p></div>
             : <table className="w-full text-sm">
-              <thead><tr className="text-left text-gray-500 border-b bg-gray-50/50"><th className="px-5 py-3">Product</th><th className="px-5 py-3">SKU</th><th className="px-5 py-3 text-center">Stock</th><th className="px-5 py-3 text-right">Value</th></tr></thead>
+              <thead><tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/50"><th className="px-5 py-3">Product</th><th className="px-5 py-3">SKU</th><th className="px-5 py-3 text-center">Stock</th><th className="px-5 py-3 text-right">Value</th></tr></thead>
               <tbody>
                 {products.map((p) => (
-                  <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                  <tr key={p.id} className="border-b border-gray-100/50 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
                     <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">{p.name}</td>
                     <td className="px-5 py-3 text-gray-500">{p.sku}</td>
                     <td className="px-5 py-3 text-center font-semibold tabnum">{p.currentStock || 0} {p.unit}</td>

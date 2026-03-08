@@ -45,11 +45,11 @@ export default function GSTR1Page() {
         {isLoading ? <div className="flex items-center justify-center py-20"><LuLoader className="w-6 h-6 animate-spin text-indigo-500" /></div>
         : invoices.length === 0 ? <div className="text-center py-20"><LuFileText className="w-12 h-12 mx-auto text-gray-300 mb-3" /><p className="text-gray-500">No sales invoices for GSTR-1</p><p className="text-sm text-gray-400 mt-1">Create sales invoices to auto-generate this return</p></div>
         : <div className="overflow-x-auto"><table className="w-full text-sm">
-          <thead><tr className="text-left text-gray-500 border-b bg-gray-50/50"><th className="px-5 py-3">Invoice #</th><th className="px-5 py-3">Party</th><th className="px-5 py-3">GSTIN</th><th className="px-5 py-3">Date</th><th className="px-5 py-3 text-right">Taxable</th><th className="px-5 py-3 text-right">Rate</th><th className="px-5 py-3 text-right">CGST</th><th className="px-5 py-3 text-right">SGST</th><th className="px-5 py-3 text-right">Total</th></tr></thead>
+          <thead><tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50"><th className="px-5 py-3">Invoice #</th><th className="px-5 py-3">Party</th><th className="px-5 py-3">GSTIN</th><th className="px-5 py-3">Date</th><th className="px-5 py-3 text-right">Taxable</th><th className="px-5 py-3 text-right">Rate</th><th className="px-5 py-3 text-right">CGST</th><th className="px-5 py-3 text-right">SGST</th><th className="px-5 py-3 text-right">Total</th></tr></thead>
           <tbody>{invoices.map((inv) => (
-            <tr key={inv.id} className="border-b border-gray-50 hover:bg-gray-50/50">
-              <td className="px-5 py-3 font-semibold text-indigo-600">{inv.invoiceNumber}</td>
-              <td className="px-5 py-3 text-gray-700">{inv.party?.name || 'Cash'}</td>
+            <tr key={inv.id} className="border-b border-gray-100/50 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+              <td className="px-5 py-3 font-semibold text-indigo-600 dark:text-indigo-400">{inv.invoiceNumber}</td>
+              <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{inv.party?.name || 'Cash'}</td>
               <td className="px-5 py-3 text-gray-500 font-mono text-xs">{inv.party?.gstin || '—'}</td>
               <td className="px-5 py-3 text-gray-500">{new Date(inv.issueDate).toLocaleDateString('en-IN')}</td>
               <td className="px-5 py-3 text-right">{formatCurrency(inv.subtotal)}</td>
@@ -61,8 +61,8 @@ export default function GSTR1Page() {
               <td className="px-5 py-3 text-right font-medium">{formatCurrency(inv.totalAmount)}</td>
             </tr>
           ))}</tbody>
-          <tfoot><tr className="bg-gray-50 dark:bg-gray-800/50 font-semibold text-gray-900 dark:text-white">
-            <td className="px-5 py-3" colSpan={5}>Total</td>
+          <tfoot><tr className="bg-gray-50/50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 font-semibold text-gray-900 dark:text-white">
+            <td className="px-5 py-3" colSpan={4}>Total</td>
             <td className="px-5 py-3 text-right">{formatCurrency(totalTaxable)}</td>
             <td className="px-5 py-3 text-right"></td>
             <td className="px-5 py-3 text-right">{formatCurrency(totalCGST)}</td>

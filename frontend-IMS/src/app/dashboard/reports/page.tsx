@@ -8,7 +8,7 @@ import { useInvoices } from '@/hooks/useInvoices';
 import { useProducts } from '@/hooks/useProducts';
 import { useParties } from '@/hooks/useParties';
 import { useDashboardStats, type TimeRange } from '@/hooks/useDashboard';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // Lazy-load recharts — defers heavy chart library off the initial bundle
 // rule: bundle-dynamic-imports
@@ -28,10 +28,13 @@ const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transiti
 
 export default function ReportsPage() {
   const [range, setRange] = useState<TimeRange>('6months');
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => { setIsMounted(true); }, []);
+
   const { data: stats, isLoading: lstats } = useDashboardStats(range);
   const { data: productsData, isLoading: lprod } = useProducts({ pageSize: 200 });
   const { data: partiesData, isLoading: lpar } = useParties({ pageSize: 200 });
-  const isLoading = (lstats && !stats) || lprod || lpar;
+  const isLoading = !isMounted || (lstats && !stats) || lprod || lpar;
 
   const products = productsData?.products || [];
   const parties = partiesData?.parties || [];
@@ -59,7 +62,12 @@ export default function ReportsPage() {
         <p className="text-sm text-gray-500 mt-1">Generated from your business data</p>
       </motion.div>
 
-      {isLoading ? <div className="flex items-center justify-center py-20"><LuLoader className="w-6 h-6 animate-spin text-indigo-500" /></div> : (
+      {isLoading ? (
+        <motion.div variants={item} className="flex flex-col items-center justify-center py-32">
+          <LuLoader className="w-10 h-10 animate-spin text-indigo-500 mb-4" />
+          <p className="text-gray-500 dark:text-gray-400 font-medium">Generating your business reports...</p>
+        </motion.div>
+      ) : (
         <motion.div variants={item} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {reports.map((r) => (
             <div key={r.title} className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 p-5 hover:shadow-lg transition-shadow group">

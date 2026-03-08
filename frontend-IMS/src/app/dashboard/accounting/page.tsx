@@ -4,14 +4,15 @@ import { motion } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils';
 import { LuBookOpen, LuLoader, LuArrowUpRight, LuArrowDownRight } from 'react-icons/lu';
 import { useInvoices } from '@/hooks/useInvoices';
-
-const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
-const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } };
+import { useState, useEffect } from 'react';
 
 export default function AccountingPage() {
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => { setIsMounted(true); }, []);
+
   const { data: salesData, isLoading: ls } = useInvoices({ type: 'sale', pageSize: 200 });
   const { data: purchaseData, isLoading: lp } = useInvoices({ type: 'purchase', pageSize: 200 });
-  const isLoading = ls || lp;
+  const isLoading = !isMounted || ls || lp;
 
   const sales = salesData?.invoices || [];
   const purchases = purchaseData?.invoices || [];
@@ -24,18 +25,30 @@ export default function AccountingPage() {
   const totalReceivable = sales.reduce((s, i) => s + (i.totalAmount || 0) - (i.amountPaid || 0), 0);
   const totalPayable = purchases.reduce((s, i) => s + (i.totalAmount || 0) - (i.amountPaid || 0), 0);
 
-
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-      <motion.div variants={item}>
+    <div className="space-y-6">
+      {/* Header — always visible immediately */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">Accounting</h1>
-        <p className="text-sm text-gray-500 mt-1">Profit & Loss and key financial metrics</p>
+        <p className="text-sm text-gray-500 mt-1">Profit &amp; Loss and key financial metrics</p>
       </motion.div>
 
-      {isLoading ? <div className="flex items-center justify-center py-20"><LuLoader className="w-6 h-6 animate-spin text-indigo-500" /></div> : (
-        <>
-          {/* P&L Summary */}
-          <motion.div variants={item} className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-32">
+          <LuLoader className="w-10 h-10 animate-spin text-indigo-500 mb-4" />
+          <p className="text-gray-500 dark:text-gray-400 font-medium">Fetching fresh accounting data...</p>
+        </div>
+      ) : (
+        /* key forces a fresh mount+fade-in every time content transitions in */
+        <motion.div
+          key="accounting-content"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="space-y-6"
+        >
+          {/* P&L Summary Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               { label: 'Revenue', value: formatCurrency(revenue), color: 'text-emerald-600', icon: LuArrowUpRight },
               { label: 'Cost of Goods', value: formatCurrency(cogs), color: 'text-red-600', icon: LuArrowDownRight },
@@ -47,11 +60,13 @@ export default function AccountingPage() {
                 <p className={`text-2xl font-bold mt-1 ${s.color}`}>{s.value}</p>
               </div>
             ))}
-          </motion.div>
+          </div>
 
           {/* P&L Table */}
-          <motion.div variants={item} className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 overflow-hidden">
-            <div className="px-5 py-4 border-b"><h2 className="font-semibold text-gray-900 dark:text-white">Profit & Loss Statement</h2></div>
+          <div className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 overflow-hidden text-gray-900 dark:text-gray-100">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+              <h2 className="font-semibold text-gray-900 dark:text-white">Profit &amp; Loss Statement</h2>
+            </div>
             <table className="w-full text-sm">
               <tbody>
                 {[
@@ -62,17 +77,17 @@ export default function AccountingPage() {
                   { label: 'Tax Paid (ITC)', value: -taxPaid, bold: false, color: '' },
                   { label: 'Net Tax Liability', value: taxCollected - taxPaid, bold: true, color: 'text-indigo-600', divider: true },
                 ].map((row) => (
-                  <tr key={row.label} className={`border-b border-gray-50 dark:border-gray-800 ${row.divider ? 'bg-gray-50/50 dark:bg-gray-800/50' : ''}`}>
+                  <tr key={row.label} className={`border-b border-gray-100/50 dark:border-gray-800 ${row.divider ? 'bg-gray-50/50 dark:bg-gray-800/50' : ''}`}>
                     <td className={`px-5 py-3 ${row.bold ? 'font-semibold' : ''} text-gray-700 dark:text-gray-300`}>{row.label}</td>
                     <td className={`px-5 py-3 text-right ${row.bold ? 'font-bold' : 'font-medium'} ${row.color}`}>{formatCurrency(Math.abs(row.value))}{row.value < 0 ? ' (Dr)' : ''}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </motion.div>
+          </div>
 
           {/* Receivables / Payables */}
-          <motion.div variants={item} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 p-5">
               <p className="text-sm text-gray-500 mb-1">Total Receivable</p>
               <p className="text-2xl font-bold text-emerald-600">{formatCurrency(totalReceivable)}</p>
@@ -83,9 +98,9 @@ export default function AccountingPage() {
               <p className="text-2xl font-bold text-red-600">{formatCurrency(totalPayable)}</p>
               <p className="text-xs text-gray-400 mt-1">{purchases.filter((i) => (i.totalAmount - (i.amountPaid || 0)) > 0).length} unpaid bills</p>
             </div>
-          </motion.div>
-        </>
+          </div>
+        </motion.div>
       )}
-    </motion.div>
+    </div>
   );
 }

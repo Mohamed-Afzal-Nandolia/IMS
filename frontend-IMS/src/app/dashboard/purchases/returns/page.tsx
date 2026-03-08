@@ -47,7 +47,7 @@ export default function PurchaseReturnsPage() {
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">Purchase Returns</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{totalItems} returns (Debit Notes)</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-white text-sm font-semibold hover:shadow-lg transition-all flex items-center gap-2 self-start">
+        <button onClick={() => setShowModal(true)} className="px-5 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-all flex items-center gap-2 self-start">
           <LuPlus className="w-4 h-4" /> New Return
         </button>
       </motion.div>
@@ -123,7 +123,7 @@ export default function PurchaseReturnsPage() {
       {/* View Modal */}
       <AnimatePresence>
         {viewInvoice && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setViewInvoice(null)}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setViewInvoice(null)}>
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Return {viewInvoice.invoiceNumber}</h2>
@@ -150,7 +150,7 @@ export default function PurchaseReturnsPage() {
       {/* Delete Confirm */}
       <AnimatePresence>
         {deleteConfirm && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-6 text-center">
               <LuTrash2 className="w-12 h-12 mx-auto text-red-500 mb-3" />
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Delete Return?</h3>
@@ -227,32 +227,35 @@ function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClo
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">New Purchase Return (Debit Note)</h2>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700"><LuX className="w-5 h-5" /></button>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-900 rounded-3xl max-w-5xl w-full p-8 shadow-2xl max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-800">
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100 dark:border-gray-800">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">New Purchase Return (Debit Note)</h2>
+            <p className="text-sm text-gray-500 mt-1">Record items returned to your supplier.</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><LuX className="w-6 h-6" /></button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier *</label>
-            <select value={partyId} onChange={(e) => setPartyId(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none">
-              <option value="">Select supplier</option>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Supplier *</label>
+            <select value={partyId} onChange={(e) => setPartyId(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white">
+              <option value="">Choose a supplier...</option>
               {(partiesData?.parties || []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Return Date</label>
-            <input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Return Date</label>
+            <input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white" />
           </div>
         </div>
 
         {/* Items */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Returned Items</h3>
-            <button onClick={addItem} className="text-sm text-indigo-600 font-medium flex items-center gap-1"><LuPlus className="w-4 h-4" /> Add Item</button>
+        <div className="mb-8 p-6 bg-gray-50/50 dark:bg-gray-800/20 rounded-2xl border border-gray-100 dark:border-gray-800">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-base font-bold text-gray-900 dark:text-white">Returned Items</h3>
+            <button onClick={addItem} className="px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-bold flex items-center gap-2 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all"><LuPlus className="w-4 h-4" /> Add Item</button>
           </div>
           {items.length === 0 ? (
             <div className="text-center py-8 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
@@ -284,22 +287,24 @@ function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClo
         </div>
 
         {/* Totals & Notes */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-8">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reason for Return</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Damaged items, wrong shipment..." rows={3} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none resize-none" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-rose-600 dark:text-rose-400 uppercase tracking-wider text-xs font-bold">Reason for Return</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Damaged items, wrong shipment received..." rows={4} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-rose-500 transition-all text-gray-900 dark:text-white resize-none" />
           </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm"><span className="text-gray-500">Subtotal</span><span className="font-medium tabnum">{formatCurrency(subtotal)}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-gray-500">CGST</span><span className="tabnum">{formatCurrency(totalGst / 2)}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-gray-500">SGST</span><span className="tabnum">{formatCurrency(totalGst / 2)}</span></div>
-            <div className="flex justify-between text-base font-bold border-t pt-2 mt-2"><span>Refund Expected</span><span className="text-rose-600 tabnum">{formatCurrency(grandTotal)}</span></div>
+          <div className="space-y-3 bg-white dark:bg-gray-800/40 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+            <div className="flex justify-between text-sm"><span className="text-gray-500 dark:text-gray-400">Subtotal</span><span className="font-medium text-gray-900 dark:text-white tabnum">{formatCurrency(subtotal)}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-gray-500 dark:text-gray-400">GST Adjustment</span><span className="font-medium text-gray-900 dark:text-white tabnum">{formatCurrency(totalGst)}</span></div>
+            <div className="flex justify-between text-xl font-bold border-t border-gray-100 dark:border-gray-700 pt-4 mt-4">
+              <span className="text-gray-900 dark:text-white">Refund Expected</span>
+              <span className="text-rose-600 dark:text-rose-400 tabnum">{formatCurrency(grandTotal)}</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-6 mt-4 border-t border-gray-100 dark:border-gray-700">
-          <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium">Cancel</button>
-          <button onClick={handleSubmit} disabled={createInvoice.isPending} className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-white text-sm font-semibold disabled:opacity-50 flex items-center gap-2">
+        <div className="flex justify-end gap-3 pt-8 mt-8 border-t border-gray-100 dark:border-gray-800">
+          <button onClick={onClose} className="px-6 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</button>
+          <button onClick={handleSubmit} disabled={createInvoice.isPending} className="px-10 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-red-100 dark:shadow-none transition-all active:scale-95">
             {createInvoice.isPending && <LuLoader className="w-4 h-4 animate-spin" />} Issue Debit Note
           </button>
         </div>

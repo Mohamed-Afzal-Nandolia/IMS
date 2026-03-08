@@ -28,14 +28,14 @@ export default function LandingPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950">
+    <div className="min-h-screen bg-slate-50 dark:bg-gray-950">
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 lg:px-12 py-4 max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center">
             <LuBox className="w-6 h-6 text-white" />
           </div>
-          <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          <span className="text-xl font-bold text-indigo-600">
             IMS Pro
           </span>
         </div>
@@ -47,7 +47,7 @@ export default function LandingPage() {
               </button>
             </Link>
             <Link href="/login?tab=register">
-              <button className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all">
+              <button className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all">
                 Get Started Free
               </button>
             </Link>
@@ -55,7 +55,7 @@ export default function LandingPage() {
           <SignedIn>
             <button
               onClick={() => router.push('/dashboard')}
-              className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all flex items-center gap-2"
+              className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all flex items-center gap-2"
             >
               Go to Dashboard <LuArrowRight className="w-4 h-4" />
             </button>
@@ -77,7 +77,7 @@ export default function LandingPage() {
           </div>
           <h1 className="text-4xl lg:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight">
             Manage Your Business{' '}
-            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
+            <span className="text-indigo-600">
               Smarter
             </span>
           </h1>
@@ -88,7 +88,7 @@ export default function LandingPage() {
           <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
             <SignedOut>
               <Link href="/login?tab=register">
-                <button className="px-8 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl hover:shadow-xl hover:shadow-indigo-500/30 transition-all flex items-center gap-2">
+                <button className="px-8 py-3.5 text-base font-semibold text-white bg-indigo-600 rounded-2xl hover:bg-indigo-700 transition-all flex items-center gap-2">
                   Start Free Trial <LuArrowRight className="w-5 h-5" />
                 </button>
               </Link>
@@ -96,7 +96,7 @@ export default function LandingPage() {
             <SignedIn>
               <button
                 onClick={() => router.push('/dashboard')}
-                className="px-8 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl hover:shadow-xl hover:shadow-indigo-500/30 transition-all flex items-center gap-2"
+                className="px-8 py-3.5 text-base font-semibold text-white bg-indigo-600 rounded-2xl hover:bg-indigo-700 transition-all flex items-center gap-2"
               >
                 Open Dashboard <LuArrowRight className="w-5 h-5" />
               </button>

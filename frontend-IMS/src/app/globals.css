@@ -83,15 +83,12 @@ a,
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 37%, #e2e8f0 63%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+  background: #e2e8f0;
   border-radius: 8px;
 }
 
 .dark .skeleton {
-  background: linear-gradient(90deg, #1e293b 25%, #334155 37%, #1e293b 63%);
-  background-size: 200% 100%;
+  background: #1e293b;
 }
 
 /* Web guidelines: respect prefers-reduced-motion — disable animations for accessibility */
@@ -128,9 +125,8 @@ a,
 
 /* Glass card effect */
 .glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .dark .glass-card {
@@ -138,21 +134,21 @@ a,
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Custom gradient backgrounds */
+/* Custom solid backgrounds */
 .gradient-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #6366f1;
 }
 
 .gradient-success {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  background: #10b981;
 }
 
 .gradient-warning {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: #f59e0b;
 }
 
 .gradient-info {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: #3b82f6;
 }
 
 /* Focus ring — use focus-visible so clicks don't show ring */

@@ -88,7 +88,7 @@ export default function ProductsPage() {
           <button className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"><LuDownload className="w-4 h-4" /> Export</button>
           <button
             onClick={() => { setEditingProduct(null); setShowModal(true); }}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-indigo-500/25 transition-all flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-all flex items-center gap-2"
           >
             <LuPlus className="w-4 h-4" /> Add Product
           </button>
@@ -144,7 +144,7 @@ export default function ProductsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/50">
+                <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50">
                   <th className="px-5 py-3 font-medium">Product</th>
                   <th className="px-5 py-3 font-medium">SKU</th>
                   <th className="px-5 py-3 font-medium">HSN</th>
@@ -158,7 +158,7 @@ export default function ProductsPage() {
               </thead>
               <tbody>
                 {products.map((p) => (
-                  <tr key={p.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                  <tr key={p.id} className="border-b border-gray-100/50 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
                     <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">{p.name}</td>
                     <td className="px-5 py-3 text-gray-500 dark:text-gray-400 font-mono text-xs">{p.sku}</td>
                     <td className="px-5 py-3 text-gray-500 dark:text-gray-400">{p.hsnCode}</td>
@@ -184,7 +184,7 @@ export default function ProductsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-gray-700/50">
+          <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-gray-800">
             <p className="text-sm text-gray-500">Showing {(page-1)*20+1}–{Math.min(page*20, total)} of {total}</p>
             <div className="flex gap-1">
               {Array.from({ length: totalPages }, (_, i) => (
@@ -209,7 +209,7 @@ export default function ProductsPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
               onClick={() => setViewProduct(null)}
             >
               <motion.div
@@ -257,7 +257,7 @@ export default function ProductsPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
               onClick={() => setDeleteConfirm(null)}
             >
               <motion.div

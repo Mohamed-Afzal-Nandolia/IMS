@@ -43,7 +43,7 @@ export default function ProductFormModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <motion.div
@@ -51,12 +51,15 @@ export default function ProductFormModal({
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.95, y: 20 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-gray-900 rounded-2xl max-w-3xl w-full p-8 shadow-2xl max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-800"
       >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            {product ? 'Edit Product' : 'Add Product'}
-          </h2>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {product ? 'Edit Product' : 'Add Product'}
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">Fill in the details below to {product ? 'update' : 'create'} your product.</p>
+          </div>
           <button
             onClick={onClose}
             aria-label="Close modal"
@@ -66,10 +69,13 @@ export default function ProductFormModal({
           </button>
         </div>
 
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
+            {/* --- Section: Basic Info --- */}
+            <div className="col-span-full mb-2"><h3 className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Basic Information</h3></div>
+            
             {/* Product Name */}
-            <div>
+            <div className="sm:col-span-2">
               <label htmlFor="prod-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Product Name *
               </label>
@@ -79,97 +85,17 @@ export default function ProductFormModal({
                 autoComplete="off"
                 value={form.name}
                 onChange={(e) => update('name', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus-visible:border-indigo-500"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 focus-visible:ring-1 focus-visible:ring-indigo-500/20 transition-all text-gray-900 dark:text-white"
               />
             </div>
+          </div>
 
-            {/* SKU */}
-            <div>
-              <label htmlFor="prod-sku" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                SKU *
-              </label>
-              <input
-                id="prod-sku"
-                required
-                autoComplete="off"
-                spellCheck={false}
-                value={form.sku}
-                onChange={(e) => update('sku', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus-visible:border-indigo-500"
-              />
-            </div>
-
-            {/* HSN Code */}
-            <div>
-              <label htmlFor="prod-hsn" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                HSN Code
-              </label>
-              <input
-                id="prod-hsn"
-                autoComplete="off"
-                spellCheck={false}
-                inputMode="numeric"
-                value={form.hsnCode}
-                onChange={(e) => update('hsnCode', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus-visible:border-indigo-500"
-              />
-            </div>
-
-            {/* Category */}
-            <div>
-              <label htmlFor="prod-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Category
-              </label>
-              <select
-                id="prod-category"
-                value={form.category_id || ''}
-                onChange={(e) => update('category_id', e.target.value || null)}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus-visible:border-indigo-500"
-              >
-                <option value="">No Category</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Unit */}
-            <div>
-              <label htmlFor="prod-unit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Unit
-              </label>
-              <select
-                id="prod-unit"
-                value={form.unit}
-                onChange={(e) => update('unit', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus-visible:border-indigo-500"
-              >
-                {['pcs', 'kg', 'g', 'L', 'mL', 'box', 'pack', 'dozen', 'meter', 'set'].map((u) => (
-                  <option key={u} value={u}>{u}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* GST Rate */}
-            <div>
-              <label htmlFor="prod-gst" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                GST Rate (%)
-              </label>
-              <select
-                id="prod-gst"
-                value={form.gstRate}
-                onChange={(e) => update('gstRate', Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus-visible:border-indigo-500"
-              >
-                {[0, 5, 12, 18, 28].map((r) => (
-                  <option key={r} value={r}>{r}%</option>
-                ))}
-              </select>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
+            <div className="col-span-full pt-4 border-t border-gray-100 dark:border-gray-800/50 mb-2"><h3 className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Pricing & Tax</h3></div>
 
             {/* Selling Price */}
             <div>
-              <label htmlFor="prod-selling" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="prod-selling" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Selling Price (₹) *
               </label>
               <input
@@ -182,13 +108,30 @@ export default function ProductFormModal({
                 autoComplete="off"
                 value={form.sellingPrice || ''}
                 onChange={(e) => update('sellingPrice', Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus-visible:border-indigo-500"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 focus-visible:ring-1 focus-visible:ring-indigo-500/20 transition-all text-gray-900 dark:text-white"
               />
+            </div>
+
+            {/* GST Rate */}
+            <div>
+              <label htmlFor="prod-gst" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                GST Rate (%)
+              </label>
+              <select
+                id="prod-gst"
+                value={form.gstRate}
+                onChange={(e) => update('gstRate', Number(e.target.value))}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
+              >
+                {[0, 5, 12, 18, 28].map((r) => (
+                  <option key={r} value={r}>{r}%</option>
+                ))}
+              </select>
             </div>
 
             {/* Purchase Price */}
             <div>
-              <label htmlFor="prod-purchase" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="prod-purchase" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Purchase Price (₹)
               </label>
               <input
@@ -200,14 +143,68 @@ export default function ProductFormModal({
                 autoComplete="off"
                 value={form.purchasePrice || ''}
                 onChange={(e) => update('purchasePrice', Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus-visible:border-indigo-500"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
               />
             </div>
 
+            {/* SKU */}
+            <div>
+              <label htmlFor="prod-sku" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                SKU *
+              </label>
+              <input
+                id="prod-sku"
+                required
+                autoComplete="off"
+                spellCheck={false}
+                value={form.sku}
+                onChange={(e) => update('sku', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
+              />
+            </div>
+            
+            {/* HSN Code */}
+            <div>
+              <label htmlFor="prod-hsn" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                HSN Code
+              </label>
+              <input
+                id="prod-hsn"
+                autoComplete="off"
+                spellCheck={false}
+                inputMode="numeric"
+                value={form.hsnCode}
+                onChange={(e) => update('hsnCode', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
+              />
+            </div>
+
+            {/* Category */}
+            <div>
+              <label htmlFor="prod-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Category
+              </label>
+              <select
+                id="prod-category"
+                value={form.category_id || ''}
+                onChange={(e) => update('category_id', e.target.value || null)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
+              >
+                <option value="">No Category</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
+            <div className="col-span-full pt-4 border-t border-gray-100 dark:border-gray-800/50 mb-2"><h3 className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Inventory Settings</h3></div>
+
             {/* Current Stock */}
             <div>
-              <label htmlFor="prod-stock" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Current Stock
+              <label htmlFor="prod-stock" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Initial Stock Level
               </label>
               <input
                 id="prod-stock"
@@ -217,14 +214,14 @@ export default function ProductFormModal({
                 autoComplete="off"
                 value={form.currentStock || ''}
                 onChange={(e) => update('currentStock', Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus-visible:border-indigo-500"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
               />
             </div>
 
             {/* Min Stock Level */}
             <div>
-              <label htmlFor="prod-minstock" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Min Stock Level
+              <label htmlFor="prod-minstock" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Minimum Stock Alert
               </label>
               <input
                 id="prod-minstock"
@@ -234,41 +231,60 @@ export default function ProductFormModal({
                 autoComplete="off"
                 value={form.minStockLevel || ''}
                 onChange={(e) => update('minStockLevel', Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus-visible:border-indigo-500"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
+              />
+            </div>
+
+            {/* Unit */}
+            <div>
+              <label htmlFor="prod-unit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Unit of Measurement
+              </label>
+              <select
+                id="prod-unit"
+                value={form.unit}
+                onChange={(e) => update('unit', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
+              >
+                {['pcs', 'kg', 'g', 'L', 'mL', 'box', 'pack', 'dozen', 'meter', 'set'].map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-gray-100 dark:border-gray-800/50">
+            {/* Description */}
+            <div>
+              <label htmlFor="prod-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Description & Notes
+              </label>
+              <textarea
+                id="prod-desc"
+                rows={3}
+                autoComplete="off"
+                value={form.description}
+                onChange={(e) => update('description', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white resize-none"
               />
             </div>
           </div>
 
-          {/* Description */}
-          <div>
-            <label htmlFor="prod-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description
-            </label>
-            <textarea
-              id="prod-desc"
-              rows={2}
-              autoComplete="off"
-              value={form.description}
-              onChange={(e) => update('description', e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus-visible:border-indigo-500 resize-none"
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex justify-end gap-3 pt-6 mt-4 border-t border-gray-100 dark:border-gray-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium"
+              className="px-6 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
+              className="px-8 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-indigo-100 dark:shadow-none transition-all active:scale-95"
             >
               {isSubmitting && <LuLoader className="w-4 h-4 animate-spin" />}
-              {product ? 'Update Product' : 'Add Product'}
+              {product ? 'Save Changes' : 'Create Product'}
             </button>
           </div>
         </form>

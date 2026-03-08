@@ -57,13 +57,13 @@ export default function StockAdjustPage() {
           <div className="text-center py-20"><LuPackage className="w-12 h-12 mx-auto text-gray-300 mb-3" /><p className="text-gray-500 font-medium">No products found</p></div>
         ) : (
           <table className="w-full text-sm">
-            <thead><tr className="text-left text-gray-500 border-b bg-gray-50/50 dark:bg-gray-800/50"><th className="px-5 py-3 font-medium">Product</th><th className="px-5 py-3 font-medium">SKU</th><th className="px-5 py-3 font-medium text-center">Current Stock</th><th className="px-5 py-3 font-medium text-center">Adjustment</th><th className="px-5 py-3 font-medium text-center">Action</th></tr></thead>
+            <thead><tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50"><th className="px-5 py-3 font-medium">Product</th><th className="px-5 py-3 font-medium">SKU</th><th className="px-5 py-3 font-medium text-center">Current Stock</th><th className="px-5 py-3 font-medium text-center">Adjustment</th><th className="px-5 py-3 font-medium text-center">Action</th></tr></thead>
             <tbody>
               {products.map((p) => (
-                <tr key={p.id} className="border-b border-gray-50 dark:border-gray-800">
+                <tr key={p.id} className="border-b border-gray-100/50 dark:border-gray-800 text-gray-700 dark:text-gray-300">
                   <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">{p.name}</td>
-                  <td className="px-5 py-3 text-gray-500 font-mono text-xs">{p.sku}</td>
-                  <td className="px-5 py-3 text-center font-semibold tabnum">{p.currentStock} {p.unit}</td>
+                  <td className="px-5 py-3 text-gray-500 dark:text-gray-400 font-mono text-xs">{p.sku}</td>
+                  <td className="px-5 py-3 text-center font-semibold text-gray-900 dark:text-white tabnum">{p.currentStock} {p.unit}</td>
                   <td className="px-5 py-3"><div className="flex items-center justify-center gap-2">
                     <button onClick={() => setAdjustments((prev) => ({ ...prev, [p.id]: (prev[p.id] || 0) - 1 }))} className="p-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-100"><LuMinus className="w-4 h-4" /></button>
                     <input type="number" inputMode="numeric" value={adjustments[p.id] || 0} onChange={(e) => setAdjustments((prev) => ({ ...prev, [p.id]: Number(e.target.value) }))} className="w-16 text-center px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm tabnum" />

@@ -9,7 +9,7 @@ import {
 import { useDashboardStats, type TimeRange } from '@/hooks/useDashboard';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // Lazy-load recharts — heavy chart library, not needed for initial render
 // rule: bundle-dynamic-imports — defers ~200KB of chart code
@@ -29,9 +29,12 @@ const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transiti
 
 export default function DashboardPage() {
   const [range, setRange] = useState<TimeRange>('6months');
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => { setIsMounted(true); }, []);
+
   const { data: stats, isLoading } = useDashboardStats(range);
 
-  if (isLoading && !stats) {
+  if (!isMounted || (isLoading && !stats)) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center">
@@ -43,10 +46,10 @@ export default function DashboardPage() {
   }
 
   const kpiCards = [
-    { label: 'Total Sales', value: formatCurrency(stats?.totalSales || 0), change: `${stats?.salesCount || 0} invoices`, icon: LuTrendingUp, color: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-50 dark:bg-emerald-900/20', iconColor: 'text-emerald-600' },
-    { label: 'Total Purchases', value: formatCurrency(stats?.totalPurchases || 0), change: `${stats?.purchasesCount || 0} bills`, icon: LuShoppingCart, color: 'from-blue-500 to-indigo-600', iconBg: 'bg-blue-50 dark:bg-blue-900/20', iconColor: 'text-blue-600' },
-    { label: 'Net Profit', value: formatCurrency(stats?.netProfit || 0), change: (stats?.netProfit || 0) >= 0 ? 'Profit' : 'Loss', icon: LuIndianRupee, color: 'from-indigo-500 to-purple-600', iconBg: 'bg-indigo-50 dark:bg-indigo-900/20', iconColor: 'text-indigo-600' },
-    { label: 'Products', value: (stats?.totalProducts || 0).toString(), change: `${stats?.totalParties || 0} parties`, icon: LuPackage, color: 'from-amber-500 to-orange-600', iconBg: 'bg-amber-50 dark:bg-amber-900/20', iconColor: 'text-amber-600' },
+    { label: 'Total Sales', value: formatCurrency(stats?.totalSales || 0), change: `${stats?.salesCount || 0} invoices`, icon: LuTrendingUp, color: 'bg-emerald-500', iconBg: 'bg-emerald-50 dark:bg-emerald-900/20', iconColor: 'text-emerald-600' },
+    { label: 'Total Purchases', value: formatCurrency(stats?.totalPurchases || 0), change: `${stats?.purchasesCount || 0} bills`, icon: LuShoppingCart, color: 'bg-blue-500', iconBg: 'bg-blue-50 dark:bg-blue-900/20', iconColor: 'text-blue-600' },
+    { label: 'Net Profit', value: formatCurrency(stats?.netProfit || 0), change: (stats?.netProfit || 0) >= 0 ? 'Profit' : 'Loss', icon: LuIndianRupee, color: 'bg-indigo-500', iconBg: 'bg-indigo-50 dark:bg-indigo-900/20', iconColor: 'text-indigo-600' },
+    { label: 'Products', value: (stats?.totalProducts || 0).toString(), change: `${stats?.totalParties || 0} parties`, icon: LuPackage, color: 'bg-amber-500', iconBg: 'bg-amber-50 dark:bg-amber-900/20', iconColor: 'text-amber-600' },
   ];
 
   return (
@@ -61,7 +64,7 @@ export default function DashboardPage() {
       <motion.div variants={item} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((kpi) => (
           <div key={kpi.label} className="relative bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 p-5 overflow-hidden group hover:shadow-lg transition-shadow">
-            <div className={`absolute -top-3 -right-3 w-28 h-28 bg-gradient-to-br ${kpi.color} opacity-10 rounded-full`} />
+            <div className={`absolute -top-3 -right-3 w-28 h-28 ${kpi.color} opacity-5 rounded-full`} />
             <div className="flex items-start justify-between relative z-10">
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">{kpi.label}</p>
@@ -101,14 +104,9 @@ export default function DashboardPage() {
             <AreaChart data={stats?.chartData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
 
               <defs>
-                <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorPurchases" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#34d399" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#34d399" stopOpacity={0}/>
-                </linearGradient>
+                <filter id="solidShadow">
+                  <feDropShadow dx="0" dy="1" stdDeviation="1" floodOpacity="0.1"/>
+                </filter>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.1} />
               <XAxis 
@@ -126,8 +124,7 @@ export default function DashboardPage() {
               />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: 'rgba(17, 24, 39, 0.8)', 
-                  backdropFilter: 'blur(8px)',
+                  backgroundColor: 'rgba(17, 24, 39, 0.95)', 
                   borderRadius: '12px',
                   border: '1px solid rgba(75, 85, 99, 0.4)',
                   color: '#fff',
@@ -136,8 +133,8 @@ export default function DashboardPage() {
                 itemStyle={{ color: '#e5e7eb', fontSize: '13px', fontWeight: 500 }}
                 labelStyle={{ color: '#9ca3af', marginBottom: '4px', fontSize: '12px' }}
               />
-              <Area type="monotone" dataKey="sales" name="Sales" stroke="#818cf8" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
-              <Area type="monotone" dataKey="purchases" name="Purchases" stroke="#34d399" strokeWidth={3} fillOpacity={1} fill="url(#colorPurchases)" />
+              <Area type="monotone" dataKey="sales" name="Sales" stroke="#818cf8" strokeWidth={3} fillOpacity={0.1} fill="#818cf8" />
+              <Area type="monotone" dataKey="purchases" name="Purchases" stroke="#34d399" strokeWidth={3} fillOpacity={0.1} fill="#34d399" />
             </AreaChart>
           </ResponsiveContainer>
         </div>

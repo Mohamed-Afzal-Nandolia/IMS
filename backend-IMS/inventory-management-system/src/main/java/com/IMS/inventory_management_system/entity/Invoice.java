@@ -33,7 +33,8 @@ public class Invoice {
     private Party party;
 
     @Column(nullable = false, length = 20)
-    private String type; // 'sale', 'purchase', 'sales_return', 'purchase_return', 'quotation', 'purchase_order'
+    private String type; // 'sale', 'purchase', 'sales_return', 'purchase_return', 'quotation',
+                         // 'purchase_order'
 
     @Column(name = "invoice_number", nullable = false, length = 100)
     private String invoiceNumber;

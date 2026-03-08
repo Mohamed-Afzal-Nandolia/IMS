@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Topbar } from '@/components/layout/Topbar';
 import { motion, AnimatePresence } from 'framer-motion';
+import DashboardLoading from './loading';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -49,7 +50,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           transition={{ duration: 0.3, ease: 'easeOut' }}
           className="p-4 lg:p-6"
         >
-          {children}
+          <Suspense fallback={<DashboardLoading />}>
+            {children}
+          </Suspense>
         </motion.div>
       </main>
 
@@ -62,7 +65,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           transition={{ duration: 0.3, ease: 'easeOut' }}
           className="p-4"
         >
-          {children}
+          <Suspense fallback={<DashboardLoading />}>
+            {children}
+          </Suspense>
         </motion.div>
       </div>
     </div>
