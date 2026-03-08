@@ -8,7 +8,7 @@ import api from '@/lib/api';
 import { LuPlus, LuUsers, LuSearch, LuLoader, LuLogOut, LuBuilding, LuCheck, LuCopy, LuShieldCheck, LuInfo, LuActivity, LuX } from 'react-icons/lu';
 
 export default function SuperAdminDashboard() {
-  const { role, logout } = useAuth();
+  const { role, logout, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
 
   const [businesses, setBusinesses] = useState<any[]>([]);
@@ -21,13 +21,15 @@ export default function SuperAdminDashboard() {
   const [onboardSuccessData, setOnboardSuccessData] = useState<any>(null);
 
   useEffect(() => {
+    if (isAuthLoading) return;
+    
     // Basic gatekeeping on the client just in case middleware is bypassed
     if (role !== 'ROLE_SUPER_ADMIN') {
       router.push('/super-admin/login');
       return;
     }
     fetchBusinesses();
-  }, [role, router]);
+  }, [role, isAuthLoading, router]);
 
   const fetchBusinesses = async () => {
     try {
@@ -78,7 +80,7 @@ export default function SuperAdminDashboard() {
     b.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><LuLoader className="w-8 h-8 animate-spin text-indigo-600" /></div>;
+  if (isAuthLoading || loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><LuLoader className="w-8 h-8 animate-spin text-indigo-600" /></div>;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 font-sans text-gray-900 dark:text-gray-100 selection:bg-indigo-500/30">
