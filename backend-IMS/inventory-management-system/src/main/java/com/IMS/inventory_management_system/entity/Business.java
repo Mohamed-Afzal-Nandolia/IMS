@@ -23,6 +23,9 @@ public class Business {
     @Column(nullable = false)
     private String name;
 
+    @Column(unique = true, length = 100)
+    private String slug;
+
     private String email;
     private String phone;
     private String gstin;
@@ -55,6 +58,10 @@ public class Business {
     private boolean newInvoiceAlert;
     private boolean paymentReceivedAlert;
     private boolean overdueInvoicesAlert;
+
+    @Column(name = "is_active", columnDefinition = "boolean default true")
+    @Builder.Default
+    private boolean isActive = true;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

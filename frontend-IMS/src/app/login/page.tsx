@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
@@ -20,7 +20,18 @@ function AuthForms() {
   const [error, setError] = useState('');
   
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, isAuthenticated, businessSlug, role, isLoading: isAuthLoading } = useAuth();
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (isAuthenticated) {
+      if (role === 'ROLE_SUPER_ADMIN') {
+        router.replace('/super-admin/dashboard');
+      } else if (businessSlug) {
+        router.replace(`/${businessSlug}/dashboard`);
+      }
+    }
+  }, [isAuthenticated, isAuthLoading, businessSlug, role, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,12 +41,12 @@ function AuthForms() {
     try {
       if (tab === 'login') {
         const { data } = await api.post('/auth/login', { email, password });
-        login(data.token, data.businessId);
-        router.push('/dashboard');
+        login(data.token, data.businessId, data.businessSlug, data.role);
+        router.push(`/${data.businessSlug}/dashboard`);
       } else {
         const { data } = await api.post('/auth/register', { email, password, businessName });
-        login(data.token, data.businessId);
-        router.push('/dashboard');
+        login(data.token, data.businessId, data.businessSlug, data.role);
+        router.push(`/${data.businessSlug}/dashboard`);
       }
     } catch (err: any) {
         if (err.response?.status === 403) {
@@ -47,6 +58,14 @@ function AuthForms() {
       setLoading(false);
     }
   };
+
+  if (isAuthLoading || isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <LuLoader className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 py-12 sm:px-6 lg:px-8">

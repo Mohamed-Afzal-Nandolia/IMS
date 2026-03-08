@@ -33,12 +33,30 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
+    }
+
+    public String extractBusinessSlug(String token) {
+        return extractClaim(token, claims -> claims.get("businessSlug", String.class));
+    }
+
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return buildToken(extraClaims, userDetails, jwtExpiration);
+    }
+
+    /** Generates a token with role and businessSlug embedded as claims */
+    public String generateTokenWithClaims(UserDetails userDetails, String role, String businessSlug) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
+        if (businessSlug != null) {
+            claims.put("businessSlug", businessSlug);
+        }
+        return buildToken(claims, userDetails, jwtExpiration);
     }
 
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {

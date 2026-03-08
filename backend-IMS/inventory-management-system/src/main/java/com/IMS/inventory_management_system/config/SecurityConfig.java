@@ -35,6 +35,7 @@ public class SecurityConfig {
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/api/v1/auth/**").permitAll()
+                                                .requestMatchers("/api/v1/super-admin/**").permitAll()
                                                 .requestMatchers("/actuator/**").permitAll() // Expose health and
                                                                                              // metrics
                                                 .anyRequest().authenticated())

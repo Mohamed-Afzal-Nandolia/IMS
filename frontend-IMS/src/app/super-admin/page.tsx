@@ -5,25 +5,25 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { LuLoader } from 'react-icons/lu';
 
-function DashboardRedirect() {
-  const { businessSlug, isAuthenticated, isLoading } = useAuth();
+function SuperAdminRedirect() {
+  const { role, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (isLoading) return;
     
-    if (isAuthenticated && businessSlug) {
-      router.replace(`/${businessSlug}/dashboard`);
+    if (isAuthenticated && role === 'ROLE_SUPER_ADMIN') {
+      router.replace('/super-admin/dashboard');
     } else {
-      router.replace('/login');
+      router.replace('/super-admin/login');
     }
-  }, [isAuthenticated, businessSlug, isLoading, router]);
+  }, [isAuthenticated, role, isLoading, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
       <div className="text-center">
         <LuLoader className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
-        <p className="mt-4 text-sm text-gray-500">Redirecting to your workspace...</p>
+        <p className="mt-4 text-sm text-gray-500">Redirecting...</p>
       </div>
     </div>
   );
@@ -39,7 +39,7 @@ export default function Page() {
               </div>
             </div>
         }>
-            <DashboardRedirect />
+            <SuperAdminRedirect />
         </Suspense>
     )
 }

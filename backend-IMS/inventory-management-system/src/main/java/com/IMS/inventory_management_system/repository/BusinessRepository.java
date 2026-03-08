@@ -9,4 +9,8 @@ import java.util.Optional;
 @Repository
 public interface BusinessRepository extends JpaRepository<Business, String> {
     Optional<Business> findByEmail(String email);
+
+    Optional<Business> findBySlug(String slug);
+
+    boolean existsBySlug(String slug);
 }

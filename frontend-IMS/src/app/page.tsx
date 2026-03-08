@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { SignedIn, SignedOut } from '@/components/auth/AuthComponents';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -26,6 +27,7 @@ const features = [
 
 export default function LandingPage() {
   const router = useRouter();
+  const { businessSlug } = useAuth();
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-gray-950">
@@ -54,7 +56,7 @@ export default function LandingPage() {
           </SignedOut>
           <SignedIn>
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push(`/${businessSlug || 'default'}/dashboard`)}
               className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all flex items-center gap-2"
             >
               Go to Dashboard <LuArrowRight className="w-4 h-4" />
@@ -95,7 +97,7 @@ export default function LandingPage() {
             </SignedOut>
             <SignedIn>
               <button
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push(`/${businessSlug || 'default'}/dashboard`)}
                 className="px-8 py-3.5 text-base font-semibold text-white bg-indigo-600 rounded-2xl hover:bg-indigo-700 transition-all flex items-center gap-2"
               >
                 Open Dashboard <LuArrowRight className="w-5 h-5" />

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -33,51 +33,6 @@ interface NavItem {
   children?: { label: string; href: string }[];
 }
 
-const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LuLayoutDashboard },
-  {
-    label: 'Products',
-    icon: LuPackage,
-    children: [
-      { label: 'All Products', href: '/dashboard/products' },
-      { label: 'Categories', href: '/dashboard/products/categories' },
-      { label: 'Stock Adjust', href: '/dashboard/products/stock-adjust' },
-    ],
-  },
-  {
-    label: 'Sales',
-    icon: LuShoppingCart,
-    children: [
-      { label: 'Invoices', href: '/dashboard/sales' },
-      { label: 'Quotations', href: '/dashboard/sales/quotations' },
-      { label: 'Sales Returns', href: '/dashboard/sales/returns' },
-    ],
-  },
-  {
-    label: 'Purchases',
-    icon: LuReceipt,
-    children: [
-      { label: 'Invoices', href: '/dashboard/purchases' },
-      { label: 'Orders', href: '/dashboard/purchases/orders' },
-      { label: 'Returns', href: '/dashboard/purchases/returns' },
-    ],
-  },
-  { label: 'Parties', href: '/dashboard/parties', icon: LuUsers },
-  { label: 'Inventory', href: '/dashboard/inventory', icon: LuBox },
-  {
-    label: 'GST & Tax',
-    icon: LuIndianRupee,
-    children: [
-      { label: 'GST Dashboard', href: '/dashboard/gst' },
-      { label: 'GSTR-1', href: '/dashboard/gst/gstr1' },
-      { label: 'GSTR-3B', href: '/dashboard/gst/gstr3b' },
-    ],
-  },
-  { label: 'Accounting', href: '/dashboard/accounting', icon: LuBookOpen },
-  { label: 'Reports', href: '/dashboard/reports', icon: LuChartBar },
-  { label: 'Settings', href: '/dashboard/settings', icon: LuSettings },
-];
-
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
@@ -85,9 +40,59 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const params = useParams();
+  const slug = params?.slug as string || 'default';
+  
   const [expanded, setExpanded] = useState<string | null>(null);
   const [hoveredNav, setHoveredNav] = useState<{ label: string; top: number } | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout>(null);
+
+  const dashBasePath = `/${slug}/dashboard`;
+
+  const navItems: NavItem[] = [
+    { label: 'Dashboard', href: dashBasePath, icon: LuLayoutDashboard },
+    {
+      label: 'Products',
+      icon: LuPackage,
+      children: [
+        { label: 'All Products', href: `${dashBasePath}/products` },
+        { label: 'Categories', href: `${dashBasePath}/products/categories` },
+        { label: 'Stock Adjust', href: `${dashBasePath}/products/stock-adjust` },
+      ],
+    },
+    {
+      label: 'Sales',
+      icon: LuShoppingCart,
+      children: [
+        { label: 'Invoices', href: `${dashBasePath}/sales` },
+        { label: 'Quotations', href: `${dashBasePath}/sales/quotations` },
+        { label: 'Sales Returns', href: `${dashBasePath}/sales/returns` },
+      ],
+    },
+    {
+      label: 'Purchases',
+      icon: LuReceipt,
+      children: [
+        { label: 'Invoices', href: `${dashBasePath}/purchases` },
+        { label: 'Orders', href: `${dashBasePath}/purchases/orders` },
+        { label: 'Returns', href: `${dashBasePath}/purchases/returns` },
+      ],
+    },
+    { label: 'Parties', href: `${dashBasePath}/parties`, icon: LuUsers },
+    { label: 'Inventory', href: `${dashBasePath}/inventory`, icon: LuBox },
+    {
+      label: 'GST & Tax',
+      icon: LuIndianRupee,
+      children: [
+        { label: 'GST Dashboard', href: `${dashBasePath}/gst` },
+        { label: 'GSTR-1', href: `${dashBasePath}/gst/gstr1` },
+        { label: 'GSTR-3B', href: `${dashBasePath}/gst/gstr3b` },
+      ],
+    },
+    { label: 'Accounting', href: `${dashBasePath}/accounting`, icon: LuBookOpen },
+    { label: 'Reports', href: `${dashBasePath}/reports`, icon: LuChartBar },
+    { label: 'Settings', href: `${dashBasePath}/settings`, icon: LuSettings },
+  ];
 
   const toggleExpand = (label: string) => {
     setExpanded((prev) => (prev === label ? null : label));
