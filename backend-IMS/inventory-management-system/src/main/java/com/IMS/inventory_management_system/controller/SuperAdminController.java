@@ -4,6 +4,7 @@ import com.IMS.inventory_management_system.dto.auth.AuthenticationRequest;
 import com.IMS.inventory_management_system.dto.auth.AuthenticationResponse;
 import com.IMS.inventory_management_system.dto.superadmin.ClientBusinessResponse;
 import com.IMS.inventory_management_system.dto.superadmin.OnboardClientRequest;
+import com.IMS.inventory_management_system.dto.superadmin.UpdateClientRequest;
 import com.IMS.inventory_management_system.service.SuperAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,15 @@ public class SuperAdminController {
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ClientBusinessResponse> onboardClient(@RequestBody OnboardClientRequest request) {
         return ResponseEntity.ok(superAdminService.onboardClient(request));
+    }
+
+    /** Update existing client business/admin data */
+    @PatchMapping("/businesses/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ClientBusinessResponse> updateClient(
+            @PathVariable String id,
+            @RequestBody UpdateClientRequest request) {
+        return ResponseEntity.ok(superAdminService.updateClient(id, request));
     }
 
     /** Activate or deactivate a client */

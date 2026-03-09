@@ -30,3 +30,11 @@ management:
   endpoint:
     health:
       show-details: always
+
+application:
+  security:
+    jwt:
+      expiration: 900000 # 15 minutes
+      refresh:
+        expiration: 2592000000 # 30 days
+        cleanup-cron: "0 0 * * * *" # hourly cleanup of expired/revoked tokens

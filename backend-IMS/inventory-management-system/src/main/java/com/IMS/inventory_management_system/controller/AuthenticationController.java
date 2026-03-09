@@ -2,9 +2,11 @@ package com.IMS.inventory_management_system.controller;
 
 import com.IMS.inventory_management_system.dto.auth.AuthenticationRequest;
 import com.IMS.inventory_management_system.dto.auth.AuthenticationResponse;
+import com.IMS.inventory_management_system.dto.auth.RefreshTokenRequest;
 import com.IMS.inventory_management_system.dto.auth.RegisterRequest;
 import com.IMS.inventory_management_system.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,5 +30,18 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationResponse> authenticate(
             @RequestBody AuthenticationRequest request) {
         return ResponseEntity.ok(service.authenticate(request));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthenticationResponse> refresh(
+            @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(service.refresh(request));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @RequestBody(required = false) RefreshTokenRequest request) {
+        service.logout(request);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
