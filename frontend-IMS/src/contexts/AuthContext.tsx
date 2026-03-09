@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import { clearTokens as clearApiTokens, setTokens as setApiTokens } from '@/lib/api';
 
 interface AuthContextType {
     isAuthenticated: boolean;
@@ -11,7 +11,7 @@ interface AuthContextType {
     businessSlug: string | null;
     role: string | null;
     isLoading: boolean;
-    login: (token: string, businessId: string, slug?: string, role?: string) => void;
+    login: (token: string, businessId: string, slug?: string, role?: string, refreshToken?: string) => void;
     logout: () => void;
 }
 
@@ -28,10 +28,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
+        const storedRefreshToken = localStorage.getItem('ims_refresh_token');
         const storedBusinessId = localStorage.getItem('ims_business_id');
         const storedSlug = localStorage.getItem('ims_business_slug');
         const storedRole = localStorage.getItem('ims_user_role');
         if (storedToken && storedBusinessId) {
+            setApiTokens(storedToken, storedRefreshToken || undefined);
             setToken(storedToken);
             setBusinessId(storedBusinessId);
             if (storedSlug) setBusinessSlug(storedSlug);
@@ -41,8 +43,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
     }, []);
 
-    const login = (newToken: string, newBusinessId: string, slug?: string, newRole?: string) => {
-        localStorage.setItem('token', newToken);
+    const login = (newToken: string, newBusinessId: string, slug?: string, newRole?: string, refreshToken?: string) => {
+        setApiTokens(newToken, refreshToken);
         if (newBusinessId) localStorage.setItem('ims_business_id', newBusinessId);
         if (slug) localStorage.setItem('ims_business_slug', slug);
         if (newRole) localStorage.setItem('ims_user_role', newRole);
@@ -55,10 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('ims_business_id');
-        localStorage.removeItem('ims_business_slug');
-        localStorage.removeItem('ims_user_role');
+        clearApiTokens();
         
         setToken(null);
         setBusinessId(null);

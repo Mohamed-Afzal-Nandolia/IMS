@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { LuPlus, LuUsers, LuSearch, LuLoader, LuLogOut, LuBuilding, LuCheck, LuCopy, LuShieldCheck, LuInfo, LuActivity, LuX } from 'react-icons/lu';
+import { LuPlus, LuUsers, LuSearch, LuLoader, LuLogOut, LuBuilding, LuCheck, LuCopy, LuShieldCheck, LuInfo, LuActivity, LuX, LuPencil } from 'react-icons/lu';
 
 export default function SuperAdminDashboard() {
   const { role, logout, isLoading: isAuthLoading } = useAuth();
@@ -19,6 +19,10 @@ export default function SuperAdminDashboard() {
   const [onboardForm, setOnboardForm] = useState({ businessName: '', slug: '', adminEmail: '', adminPassword: '', phone: '', gstin: '' });
   const [onboardLoading, setOnboardLoading] = useState(false);
   const [onboardSuccessData, setOnboardSuccessData] = useState<any>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingBusinessId, setEditingBusinessId] = useState<string | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editForm, setEditForm] = useState({ businessName: '', slug: '', adminEmail: '', adminPassword: '', phone: '', gstin: '' });
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -64,6 +68,40 @@ export default function SuperAdminDashboard() {
     } catch (err) {
       console.error(err);
       alert('Failed to toggle status');
+    }
+  };
+
+  const openEditModal = (business: any) => {
+    setEditingBusinessId(business.id);
+    setEditForm({
+      businessName: business.name || '',
+      slug: business.slug || '',
+      adminEmail: business.adminEmail || '',
+      adminPassword: '',
+      phone: business.phone || '',
+      gstin: business.gstin || '',
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingBusinessId(null);
+    setEditForm({ businessName: '', slug: '', adminEmail: '', adminPassword: '', phone: '', gstin: '' });
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBusinessId) return;
+    setEditLoading(true);
+    try {
+      const { data } = await api.patch(`/super-admin/businesses/${editingBusinessId}`, editForm);
+      setBusinesses(businesses.map((b) => (b.id === editingBusinessId ? data : b)));
+      closeEditModal();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to update client');
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -167,9 +205,14 @@ export default function SuperAdminDashboard() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button onClick={() => toggleActive(b.id, b.active)} className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${b.active ? 'text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-900 dark:hover:bg-red-900/30' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-900 dark:hover:bg-emerald-900/30'}`}>
-                        {b.active ? 'Suspend' : 'Activate'}
-                      </button>
+                      <div className="inline-flex items-center gap-2">
+                        <button onClick={() => openEditModal(b)} className="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:text-indigo-400 dark:border-indigo-900 dark:hover:bg-indigo-900/30 inline-flex items-center gap-1">
+                          <LuPencil className="w-3.5 h-3.5" /> Edit
+                        </button>
+                        <button onClick={() => toggleActive(b.id, b.active)} className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${b.active ? 'text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-900 dark:hover:bg-red-900/30' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-900 dark:hover:bg-emerald-900/30'}`}>
+                          {b.active ? 'Suspend' : 'Activate'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -271,6 +314,129 @@ export default function SuperAdminDashboard() {
                     </div>
                   </form>
                 )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isEditModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeEditModal}
+              className="absolute inset-0 bg-black/50"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 flex flex-col max-h-[90vh]"
+            >
+              <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-900 rounded-t-2xl z-10">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Edit Client</h3>
+                  <p className="text-sm text-gray-500 mt-1">Update business/admin details after onboarding.</p>
+                </div>
+                <button
+                  onClick={closeEditModal}
+                  className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                >
+                  <LuX className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto">
+                <form onSubmit={handleEditSubmit} className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Business Name *</label>
+                    <input
+                      required
+                      type="text"
+                      value={editForm.businessName}
+                      onChange={e => setEditForm({ ...editForm, businessName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none dark:bg-gray-800"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">URL Slug *</label>
+                    <input
+                      required
+                      type="text"
+                      value={editForm.slug}
+                      onChange={e => setEditForm({ ...editForm, slug: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none dark:bg-gray-800 font-mono"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Admin Email *</label>
+                      <input
+                        required
+                        type="email"
+                        value={editForm.adminEmail}
+                        onChange={e => setEditForm({ ...editForm, adminEmail: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none dark:bg-gray-800"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">New Password</label>
+                      <input
+                        type="text"
+                        value={editForm.adminPassword}
+                        onChange={e => setEditForm({ ...editForm, adminPassword: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none dark:bg-gray-800"
+                        placeholder="Leave blank to keep current password"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone</label>
+                      <input
+                        type="text"
+                        value={editForm.phone}
+                        onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none dark:bg-gray-800"
+                        placeholder="Optional"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">GSTIN</label>
+                      <input
+                        type="text"
+                        value={editForm.gstin}
+                        onChange={e => setEditForm({ ...editForm, gstin: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none dark:bg-gray-800"
+                        placeholder="Optional"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-6 flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={closeEditModal}
+                      className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={editLoading}
+                      className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium shadow-md transition-colors flex items-center gap-2"
+                    >
+                      {editLoading ? <LuLoader className="w-4 h-4 animate-spin" /> : 'Save Changes'}
+                    </button>
+                  </div>
+                </form>
               </div>
             </motion.div>
           </div>

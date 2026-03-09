@@ -37,7 +37,7 @@ function SuperAdminAuthForm() {
     try {
       const { data } = await api.post('/super-admin/auth/login', { email, password });
       // The API returns role='ROLE_SUPER_ADMIN' and businessSlug='superadmin'
-      login(data.token, data.businessId || 'superadmin', data.businessSlug, data.role);
+      login(data.token, data.businessId || 'superadmin', data.businessSlug, data.role, data.refreshToken);
       router.push('/super-admin/dashboard');
     } catch (err: any) {
         if (err.response?.status === 403 || err.response?.status === 401) {
