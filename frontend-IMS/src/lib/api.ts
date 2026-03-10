@@ -88,7 +88,12 @@ async function requestTokenRefresh(): Promise<string | null> {
         if (data?.role) localStorage.setItem(USER_ROLE_KEY, data.role);
 
         return nextAccessToken;
-    } catch {
+    } catch (error: any) {
+        if (isSuspendedError(error)) {
+            clearTokens();
+            redirectToLoginWithReason('suspended');
+            return null;
+        }
         clearTokens();
         return null;
     }
@@ -98,6 +103,18 @@ function redirectToLogin() {
     if (typeof window !== 'undefined') {
         window.location.href = '/login';
     }
+}
+
+function redirectToLoginWithReason(reason: 'suspended') {
+    if (typeof window !== 'undefined') {
+        window.location.href = `/login?reason=${reason}`;
+    }
+}
+
+function isSuspendedError(error: any) {
+    const message =
+        (error?.response?.data?.message || error?.response?.data?.error || '') as string;
+    return message.toLowerCase().includes('suspend');
 }
 
 const api = axios.create({
@@ -130,6 +147,12 @@ api.interceptors.response.use(
             requestUrl.includes('/auth/register') ||
             requestUrl.includes('/auth/refresh') ||
             requestUrl.includes('/super-admin/auth/login');
+
+        if (status === 403 && isSuspendedError(error) && !isAuthEndpoint) {
+            clearTokens();
+            redirectToLoginWithReason('suspended');
+            return Promise.reject(error);
+        }
 
         if (status !== 401 || !originalRequest || originalRequest._retry || isAuthEndpoint) {
             if (status === 401 && isAuthEndpoint) {

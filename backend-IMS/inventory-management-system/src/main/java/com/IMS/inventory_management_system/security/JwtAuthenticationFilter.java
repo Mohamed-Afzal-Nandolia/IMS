@@ -15,6 +15,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+import com.IMS.inventory_management_system.entity.User;
+import com.IMS.inventory_management_system.repository.UserRepository;
 
 @Component
 @RequiredArgsConstructor
@@ -22,6 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(
@@ -42,6 +47,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
+                if (userDetails instanceof User user) {
+                    if (!"ROLE_SUPER_ADMIN".equals(user.getRole())) {
+                        Boolean active = userRepository.isBusinessActiveByEmail(user.getEmail());
+                        if (Boolean.FALSE.equals(active)) {
+                            writeSuspendedResponse(response);
+                            return;
+                        }
+                    }
+                }
+
                 if (jwtService.isTokenValid(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
@@ -57,5 +72,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void writeSuspendedResponse(HttpServletResponse response) throws IOException {
+        if (response.isCommitted()) {
+            return;
+        }
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType("application/json");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.getWriter().write("{\"message\":\"Account suspended. Please contact support.\"}");
     }
 }

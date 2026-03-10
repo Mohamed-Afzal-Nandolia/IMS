@@ -16,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.text.Normalizer;
@@ -71,6 +72,8 @@ public class AuthenticationService {
                 var user = repository.findByEmail(request.getEmail())
                                 .orElseThrow();
 
+                ensureBusinessActive(user);
+
                 String slug = user.getBusiness() != null ? user.getBusiness().getSlug() : null;
 
                 // If slug is missing (legacy user), generate and save it
@@ -94,6 +97,7 @@ public class AuthenticationService {
                 User user = existingToken.getUser();
 
                 refreshTokenService.revoke(existingToken);
+                ensureBusinessActive(user);
 
                 String slug = resolveBusinessSlug(user);
                 return issueAuthResponse(user, slug);
@@ -155,5 +159,16 @@ public class AuthenticationService {
                         businessRepository.save(user.getBusiness());
                 }
                 return slug;
+        }
+
+        private void ensureBusinessActive(User user) {
+                if (user == null || "ROLE_SUPER_ADMIN".equals(user.getRole())) {
+                        return;
+                }
+                if (user.getBusiness() != null && !user.getBusiness().isActive()) {
+                        refreshTokenService.revokeAllForUser(user.getId());
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                                        "Account suspended. Please contact support.");
+                }
         }
 }

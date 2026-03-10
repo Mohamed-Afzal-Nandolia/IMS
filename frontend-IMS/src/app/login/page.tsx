@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 function AuthForms() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get('tab') === 'register' ? 'register' : 'login';
+  const suspendedReason = searchParams.get('reason') === 'suspended';
   const [tab, setTab] = useState<'login' | 'register'>(initialTab);
   
   const [email, setEmail] = useState('');
@@ -17,7 +18,7 @@ function AuthForms() {
   const [businessName, setBusinessName] = useState('');
   
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(suspendedReason ? 'Account suspended. Please contact support.' : '');
   
   const router = useRouter();
   const { login, isAuthenticated, businessSlug, role, isLoading: isAuthLoading } = useAuth();
@@ -32,6 +33,12 @@ function AuthForms() {
       }
     }
   }, [isAuthenticated, isAuthLoading, businessSlug, role, router]);
+
+  useEffect(() => {
+    if (suspendedReason) {
+      setError('Account suspended. Please contact support.');
+    }
+  }, [suspendedReason]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,10 +56,16 @@ function AuthForms() {
         router.push(`/${data.businessSlug}/dashboard`);
       }
     } catch (err: any) {
-        if (err.response?.status === 403) {
-            setError("Invalid credentials.");
+        const status = err.response?.status;
+        const serverMessage = err.response?.data?.message as string | undefined;
+        const normalizedMessage = serverMessage?.toLowerCase() || '';
+
+        if (status === 403 && normalizedMessage.includes('suspend')) {
+            setError(serverMessage || 'Your account has been suspended.');
+        } else if (status === 403 || status === 401) {
+            setError('Invalid credentials.');
         } else {
-            setError(err.response?.data?.message || 'Authentication failed. Please try again.');
+            setError(serverMessage || 'Authentication failed. Please try again.');
         }
     } finally {
       setLoading(false);
