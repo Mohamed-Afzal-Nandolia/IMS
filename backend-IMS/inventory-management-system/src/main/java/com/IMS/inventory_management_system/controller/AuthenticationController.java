@@ -8,10 +8,7 @@ import com.IMS.inventory_management_system.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -43,5 +40,10 @@ public class AuthenticationController {
             @RequestBody(required = false) RefreshTokenRequest request) {
         service.logout(request);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping("/ping")
+    public ResponseEntity<String> checkServerAlive(){
+        return ResponseEntity.ok("Server is Alive");
     }
 }
