@@ -6,7 +6,8 @@ const BUSINESS_ID_KEY = 'ims_business_id';
 const BUSINESS_SLUG_KEY = 'ims_business_slug';
 const USER_ROLE_KEY = 'ims_user_role';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_V1_BASE_URL = `${API_BASE_URL}/api/v1`;
 
 let cachedAccessToken: string | null = null;
 let cachedRefreshToken: string | null = null;
@@ -70,7 +71,7 @@ async function requestTokenRefresh(): Promise<string | null> {
 
     try {
         const { data } = await axios.post(
-            `${API_BASE_URL}/auth/refresh`,
+            `${API_V1_BASE_URL}/auth/refresh`,
             { refreshToken },
             { headers: { 'Content-Type': 'application/json' } }
         );
@@ -118,7 +119,7 @@ function isSuspendedError(error: any) {
 }
 
 const api = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: API_V1_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
