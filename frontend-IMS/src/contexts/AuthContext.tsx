@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { clearTokens as clearApiTokens, setTokens as setApiTokens } from '@/lib/api';
 
 interface AuthContextType {
@@ -25,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const router = useRouter();
+    const queryClient = useQueryClient();
 
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
@@ -58,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = () => {
         clearApiTokens();
+        queryClient.clear();
         
         setToken(null);
         setBusinessId(null);
