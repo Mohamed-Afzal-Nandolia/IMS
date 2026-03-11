@@ -107,7 +107,10 @@ export default function SuperAdminDashboard() {
 
   const copyCredentials = () => {
     if (!onboardSuccessData) return;
-    const text = `IMS Login Details\nURL: https://yourapp.com/${onboardSuccessData.slug}/dashboard\nEmail: ${onboardSuccessData.adminEmail}\nPassword: ${onboardSuccessData.generatedPassword}`;
+    const baseUrlRaw = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_API_URL || '';
+    const baseUrl = baseUrlRaw.replace(/\/+$/, '');
+    const loginUrl = baseUrl ? `${baseUrl}/${onboardSuccessData.slug}/dashboard` : `/${onboardSuccessData.slug}/dashboard`;
+    const text = `IMS Login Details\nURL: ${loginUrl}\nEmail: ${onboardSuccessData.adminEmail}\nPassword: ${onboardSuccessData.generatedPassword}`;
     navigator.clipboard.writeText(text);
     alert('Copied to clipboard!');
   };
