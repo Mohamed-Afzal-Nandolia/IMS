@@ -22,6 +22,7 @@ spring:
     locations: classpath:db/migration
 
 backendUrl: ${BACKEND_URL}
+frontendUrl: ${FRONTEND_URL}
 
 # Actuator Configuration
 management:
