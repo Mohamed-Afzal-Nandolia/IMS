@@ -5,6 +5,7 @@ import { usePathname, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   LuLayoutDashboard,
   LuPackage,
@@ -30,6 +31,7 @@ interface NavItem {
   label: string;
   href?: string;
   icon: React.ElementType;
+  moduleKey?: string;
   children?: { label: string; href: string }[];
 }
 
@@ -42,6 +44,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const params = useParams();
   const slug = params?.slug as string || 'default';
+  const { enabledModules } = useAuth();
   
   const [expanded, setExpanded] = useState<string | null>(null);
   const [hoveredNav, setHoveredNav] = useState<{ label: string; top: number } | null>(null);
@@ -49,11 +52,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   const dashBasePath = `/${slug}/dashboard`;
 
-  const navItems: NavItem[] = [
+  const allNavItems: NavItem[] = [
     { label: 'Dashboard', href: dashBasePath, icon: LuLayoutDashboard },
     {
       label: 'Products',
       icon: LuPackage,
+      moduleKey: 'PRODUCTS',
       children: [
         { label: 'All Products', href: `${dashBasePath}/products` },
         { label: 'Categories', href: `${dashBasePath}/products/categories` },
@@ -63,6 +67,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     {
       label: 'Sales',
       icon: LuShoppingCart,
+      moduleKey: 'SALES',
       children: [
         { label: 'Invoices', href: `${dashBasePath}/sales` },
         { label: 'Quotations', href: `${dashBasePath}/sales/quotations` },
@@ -72,27 +77,34 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     {
       label: 'Purchases',
       icon: LuReceipt,
+      moduleKey: 'PURCHASES',
       children: [
         { label: 'Invoices', href: `${dashBasePath}/purchases` },
         { label: 'Orders', href: `${dashBasePath}/purchases/orders` },
         { label: 'Returns', href: `${dashBasePath}/purchases/returns` },
       ],
     },
-    { label: 'Parties', href: `${dashBasePath}/parties`, icon: LuUsers },
-    { label: 'Inventory', href: `${dashBasePath}/inventory`, icon: LuBox },
+    { label: 'Parties', href: `${dashBasePath}/parties`, icon: LuUsers, moduleKey: 'PARTIES' },
+    { label: 'Inventory', href: `${dashBasePath}/inventory`, icon: LuBox, moduleKey: 'INVENTORY' },
     {
       label: 'GST & Tax',
       icon: LuIndianRupee,
+      moduleKey: 'GST',
       children: [
         { label: 'GST Dashboard', href: `${dashBasePath}/gst` },
         { label: 'GSTR-1', href: `${dashBasePath}/gst/gstr1` },
         { label: 'GSTR-3B', href: `${dashBasePath}/gst/gstr3b` },
       ],
     },
-    { label: 'Accounting', href: `${dashBasePath}/accounting`, icon: LuBookOpen },
-    { label: 'Reports', href: `${dashBasePath}/reports`, icon: LuChartBar },
-    { label: 'Settings', href: `${dashBasePath}/settings`, icon: LuSettings },
+    { label: 'Accounting', href: `${dashBasePath}/accounting`, icon: LuBookOpen, moduleKey: 'ACCOUNTING' },
+    { label: 'Reports', href: `${dashBasePath}/reports`, icon: LuChartBar, moduleKey: 'REPORTS' },
+    { label: 'Settings', href: `${dashBasePath}/settings`, icon: LuSettings, moduleKey: 'SETTINGS' },
   ];
+
+  // Show items that have no moduleKey (always visible) OR whose moduleKey is in enabledModules
+  const navItems = allNavItems.filter(
+    (item) => !item.moduleKey || enabledModules.includes(item.moduleKey)
+  );
 
   const toggleExpand = (label: string) => {
     setExpanded((prev) => (prev === label ? null : label));

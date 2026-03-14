@@ -3,6 +3,7 @@ package com.IMS.inventory_management_system.service;
 import com.IMS.inventory_management_system.dto.auth.AuthenticationRequest;
 import com.IMS.inventory_management_system.dto.auth.AuthenticationResponse;
 import com.IMS.inventory_management_system.dto.superadmin.ClientBusinessResponse;
+import com.IMS.inventory_management_system.dto.superadmin.ModuleAccessRequest;
 import com.IMS.inventory_management_system.dto.superadmin.OnboardClientRequest;
 import com.IMS.inventory_management_system.dto.superadmin.UpdateClientRequest;
 import com.IMS.inventory_management_system.entity.Business;
@@ -95,6 +96,7 @@ public class SuperAdminService {
                 .phone(request.getPhone())
                 .gstin(request.getGstin())
                 .isActive(true)
+                .enabledModules(request.getEnabledModules() != null ? request.getEnabledModules() : new java.util.HashSet<com.IMS.inventory_management_system.enums.Modules>())
                 .build();
         businessRepository.save(business);
 
@@ -187,6 +189,28 @@ public class SuperAdminService {
         return sb.toString();
     }
 
+    /** Update module access for a specific client business */
+    @Transactional
+    public ClientBusinessResponse updateModuleAccess(String businessId, ModuleAccessRequest request) {
+        Business business = businessRepository.findById(businessId)
+                .orElseThrow(() -> new IllegalArgumentException("Business not found: " + businessId));
+
+        if ("superadmin".equals(business.getSlug())) {
+            throw new IllegalArgumentException("Super admin business cannot be modified here");
+        }
+
+        business.getEnabledModules().clear();
+        if (request.getEnabledModules() != null) {
+            business.getEnabledModules().addAll(request.getEnabledModules());
+        }
+        businessRepository.save(business);
+
+        String adminEmail = userRepository.findFirstByBusinessId(business.getId())
+                .map(com.IMS.inventory_management_system.entity.User::getEmail)
+                .orElse("-");
+        return toClientResponse(business, adminEmail, null);
+    }
+
     private ClientBusinessResponse toClientResponse(Business business, String adminEmail, String generatedPassword) {
         return ClientBusinessResponse.builder()
                 .id(business.getId())
@@ -199,6 +223,7 @@ public class SuperAdminService {
                 .adminEmail(adminEmail)
                 .generatedPassword(generatedPassword)
                 .createdAt(business.getCreatedAt())
+                .enabledModules(business.getEnabledModules())
                 .build();
     }
 }

@@ -133,6 +133,9 @@ public class AuthenticationService {
         private AuthenticationResponse issueAuthResponse(User user, String slug) {
                 String jwtToken = jwtService.generateTokenWithClaims(user, user.getRole(), slug);
                 String refreshToken = refreshTokenService.createRefreshToken(user);
+                java.util.Set<com.IMS.inventory_management_system.enums.Modules> enabledModules = (user.getBusiness() != null && user.getBusiness().getEnabledModules() != null)
+                        ? user.getBusiness().getEnabledModules()
+                        : java.util.Collections.emptySet();
                 return AuthenticationResponse.builder()
                                 .token(jwtToken)
                                 .refreshToken(refreshToken)
@@ -140,6 +143,7 @@ public class AuthenticationService {
                                 .businessSlug(slug)
                                 .userId(user.getId())
                                 .role(user.getRole())
+                                .enabledModules(enabledModules)
                                 .build();
         }
 

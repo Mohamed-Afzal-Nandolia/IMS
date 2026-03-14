@@ -3,6 +3,7 @@ package com.IMS.inventory_management_system.controller;
 import com.IMS.inventory_management_system.dto.auth.AuthenticationRequest;
 import com.IMS.inventory_management_system.dto.auth.AuthenticationResponse;
 import com.IMS.inventory_management_system.dto.superadmin.ClientBusinessResponse;
+import com.IMS.inventory_management_system.dto.superadmin.ModuleAccessRequest;
 import com.IMS.inventory_management_system.dto.superadmin.OnboardClientRequest;
 import com.IMS.inventory_management_system.dto.superadmin.UpdateClientRequest;
 import com.IMS.inventory_management_system.service.SuperAdminService;
@@ -54,5 +55,14 @@ public class SuperAdminController {
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ClientBusinessResponse> toggleActive(@PathVariable String id) {
         return ResponseEntity.ok(superAdminService.toggleActive(id));
+    }
+
+    /** Update module access for a client business */
+    @PutMapping("/businesses/{id}/modules")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ClientBusinessResponse> updateModuleAccess(
+            @PathVariable String id,
+            @RequestBody ModuleAccessRequest request) {
+        return ResponseEntity.ok(superAdminService.updateModuleAccess(id, request));
     }
 }

@@ -48,11 +48,11 @@ function AuthForms() {
     try {
       if (tab === 'login') {
         const { data } = await api.post('/auth/login', { email, password });
-        login(data.token, data.businessId, data.businessSlug, data.role, data.refreshToken);
+        login(data.token, data.businessId, data.businessSlug, data.role, data.refreshToken, data.enabledModules ?? []);
         router.push(`/${data.businessSlug}/dashboard`);
       } else {
         const { data } = await api.post('/auth/register', { email, password, businessName });
-        login(data.token, data.businessId, data.businessSlug, data.role, data.refreshToken);
+        login(data.token, data.businessId, data.businessSlug, data.role, data.refreshToken, data.enabledModules ?? []);
         router.push(`/${data.businessSlug}/dashboard`);
       }
     } catch (err: any) {

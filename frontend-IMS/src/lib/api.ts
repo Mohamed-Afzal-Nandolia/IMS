@@ -5,6 +5,7 @@ const REFRESH_TOKEN_KEY = 'ims_refresh_token';
 const BUSINESS_ID_KEY = 'ims_business_id';
 const BUSINESS_SLUG_KEY = 'ims_business_slug';
 const USER_ROLE_KEY = 'ims_user_role';
+export const MODULES_KEY = 'ims_enabled_modules';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 const API_V1_BASE_URL = `${API_BASE_URL}/api/v1`;
@@ -62,6 +63,7 @@ export function clearTokens() {
         localStorage.removeItem(BUSINESS_ID_KEY);
         localStorage.removeItem(BUSINESS_SLUG_KEY);
         localStorage.removeItem(USER_ROLE_KEY);
+        localStorage.removeItem(MODULES_KEY);
     }
 }
 
@@ -87,6 +89,7 @@ async function requestTokenRefresh(): Promise<string | null> {
         if (data?.businessId) localStorage.setItem(BUSINESS_ID_KEY, data.businessId);
         if (data?.businessSlug) localStorage.setItem(BUSINESS_SLUG_KEY, data.businessSlug);
         if (data?.role) localStorage.setItem(USER_ROLE_KEY, data.role);
+        if (data?.enabledModules) localStorage.setItem(MODULES_KEY, JSON.stringify(data.enabledModules));
 
         return nextAccessToken;
     } catch (error: any) {

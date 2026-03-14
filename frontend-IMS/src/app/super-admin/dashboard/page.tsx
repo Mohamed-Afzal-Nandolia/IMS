@@ -5,11 +5,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { LuPlus, LuUsers, LuSearch, LuLoader, LuLogOut, LuBuilding, LuCheck, LuCopy, LuShieldCheck, LuInfo, LuActivity, LuX, LuPencil } from 'react-icons/lu';
+import { LuPlus, LuUsers, LuSearch, LuLoader, LuLogOut, LuBuilding, LuCheck, LuCopy, LuShieldCheck, LuInfo, LuActivity, LuX, LuPencil, LuPuzzle } from 'react-icons/lu';
 
 export default function SuperAdminDashboard() {
   const { role, logout, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
+
+  // All available modules with display labels
+  const AVAILABLE_MODULES = [
+    { key: 'PRODUCTS', label: 'Products' },
+    { key: 'SALES', label: 'Sales' },
+    { key: 'PURCHASES', label: 'Purchases' },
+    { key: 'PARTIES', label: 'Parties' },
+    { key: 'INVENTORY', label: 'Inventory' },
+    { key: 'GST', label: 'GST & Tax' },
+    { key: 'ACCOUNTING', label: 'Accounting' },
+    { key: 'REPORTS', label: 'Reports' },
+    { key: 'SETTINGS', label: 'Settings' },
+  ];
 
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,12 +30,14 @@ export default function SuperAdminDashboard() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [onboardForm, setOnboardForm] = useState({ businessName: '', slug: '', adminEmail: '', adminPassword: '', phone: '', gstin: '' });
+  const [onboardModules, setOnboardModules] = useState<string[]>([]);
   const [onboardLoading, setOnboardLoading] = useState(false);
   const [onboardSuccessData, setOnboardSuccessData] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingBusinessId, setEditingBusinessId] = useState<string | null>(null);
   const [editLoading, setEditLoading] = useState(false);
   const [editForm, setEditForm] = useState({ businessName: '', slug: '', adminEmail: '', adminPassword: '', phone: '', gstin: '' });
+  const [editModules, setEditModules] = useState<string[]>([]);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -50,7 +65,7 @@ export default function SuperAdminDashboard() {
     e.preventDefault();
     setOnboardLoading(true);
     try {
-      const { data } = await api.post('/super-admin/businesses', onboardForm);
+      const { data } = await api.post('/super-admin/businesses', { ...onboardForm, enabledModules: onboardModules });
       setBusinesses([...businesses, data]);
       setOnboardSuccessData(data);
     } catch (err: any) {
@@ -81,6 +96,7 @@ export default function SuperAdminDashboard() {
       phone: business.phone || '',
       gstin: business.gstin || '',
     });
+    setEditModules(business.enabledModules ? [...business.enabledModules] : []);
     setIsEditModalOpen(true);
   };
 
@@ -88,6 +104,7 @@ export default function SuperAdminDashboard() {
     setIsEditModalOpen(false);
     setEditingBusinessId(null);
     setEditForm({ businessName: '', slug: '', adminEmail: '', adminPassword: '', phone: '', gstin: '' });
+    setEditModules([]);
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -95,14 +112,25 @@ export default function SuperAdminDashboard() {
     if (!editingBusinessId) return;
     setEditLoading(true);
     try {
+      // Update business details
       const { data } = await api.patch(`/super-admin/businesses/${editingBusinessId}`, editForm);
-      setBusinesses(businesses.map((b) => (b.id === editingBusinessId ? data : b)));
+      // Update module access in a separate call
+      const { data: updatedData } = await api.put(`/super-admin/businesses/${editingBusinessId}/modules`, { enabledModules: editModules });
+      setBusinesses(businesses.map((b) => (b.id === editingBusinessId ? updatedData : b)));
       closeEditModal();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to update client');
     } finally {
       setEditLoading(false);
     }
+  };
+
+  const toggleOnboardModule = (key: string) => {
+    setOnboardModules(prev => prev.includes(key) ? prev.filter(m => m !== key) : [...prev, key]);
+  };
+
+  const toggleEditModule = (key: string) => {
+    setEditModules(prev => prev.includes(key) ? prev.filter(m => m !== key) : [...prev, key]);
   };
 
   const copyCredentials = () => {
@@ -120,8 +148,67 @@ export default function SuperAdminDashboard() {
   const filteredBusinesses = businesses.filter(b => 
     b.name.toLowerCase().includes(search.toLowerCase()) || 
     b.slug.toLowerCase().includes(search.toLowerCase()) || 
-    b.email.toLowerCase().includes(search.toLowerCase())
+    (b.email || '').toLowerCase().includes(search.toLowerCase())
   );
+
+  const openModalFresh = () => {
+    setIsModalOpen(true);
+    setOnboardSuccessData(null);
+    setOnboardForm({ businessName: '', slug: '', adminEmail: '', adminPassword: '', phone: '', gstin: '' });
+    setOnboardModules([]);
+  };
+
+  // Module toggle button component used in both modals
+  const ModuleToggleGrid = ({ enabled, onToggle }: { enabled: string[]; onToggle: (key: string) => void }) => {
+    const isAllSelected = enabled.length === AVAILABLE_MODULES.length;
+    
+    const handleSelectAll = () => {
+      if (isAllSelected) {
+        AVAILABLE_MODULES.forEach(mod => {
+          if (enabled.includes(mod.key)) onToggle(mod.key);
+        });
+      } else {
+        AVAILABLE_MODULES.forEach(mod => {
+          if (!enabled.includes(mod.key)) onToggle(mod.key);
+        });
+      }
+    };
+
+    return (
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Available Modules</span>
+          <button 
+            type="button" 
+            onClick={handleSelectAll}
+            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+          >
+            {isAllSelected ? 'Deselect All' : 'Select All'}
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {AVAILABLE_MODULES.map(mod => {
+            const isOn = enabled.includes(mod.key);
+            return (
+              <button
+                key={mod.key}
+                type="button"
+                onClick={() => onToggle(mod.key)}
+                className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
+                  isOn
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-400/30'
+                    : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400'
+                }`}
+              >
+                {isOn && <LuCheck className="inline w-3 h-3 mr-1" />}
+                {mod.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   if (isAuthLoading || loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><LuLoader className="w-8 h-8 animate-spin text-indigo-600" /></div>;
 
@@ -150,9 +237,9 @@ export default function SuperAdminDashboard() {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <LuBuilding className="w-6 h-6 text-indigo-500" /> Clients Management
             </h2>
-            <p className="text-gray-500 mt-1">Manage onboarded businesses, tenants, and their access.</p>
+            <p className="text-gray-500 mt-1">Manage onboarded businesses, tenants, and their module access.</p>
           </div>
-          <button onClick={() => { setIsModalOpen(true); setOnboardSuccessData(null); setOnboardForm({ businessName: '', slug: '', adminEmail: '', adminPassword: '', phone: '', gstin: '' }); }} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-2">
+          <button onClick={openModalFresh} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-2">
             <LuPlus className="w-5 h-5" /> Onboard New Client
           </button>
         </div>
@@ -189,6 +276,7 @@ export default function SuperAdminDashboard() {
                   <th className="px-6 py-4 font-semibold">Business</th>
                   <th className="px-6 py-4 font-semibold">Slug (URL Route)</th>
                   <th className="px-6 py-4 font-semibold">Admin Email</th>
+                  <th className="px-6 py-4 font-semibold">Modules</th>
                   <th className="px-6 py-4 font-semibold text-center">Status</th>
                   <th className="px-6 py-4 font-semibold text-right">Actions</th>
                 </tr>
@@ -204,6 +292,12 @@ export default function SuperAdminDashboard() {
                       <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono text-xs text-gray-600 dark:text-gray-300">/{b.slug}/dashboard</span>
                     </td>
                     <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{b.adminEmail}</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 text-xs font-medium border border-indigo-200 dark:border-indigo-800">
+                        <LuPuzzle className="w-3 h-3" />
+                        {b.enabledModules ? b.enabledModules.length : 0}/{AVAILABLE_MODULES.length}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${b.active ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'}`}>
                         {b.active ? 'Active' : 'Suspended'}
@@ -222,7 +316,7 @@ export default function SuperAdminDashboard() {
                   </tr>
                 ))}
                 {filteredBusinesses.length === 0 && (
-                  <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">No businesses found.</td></tr>
+                  <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500">No businesses found.</td></tr>
                 )}
               </tbody>
             </table>
@@ -280,6 +374,16 @@ export default function SuperAdminDashboard() {
                       <div><p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Login URL / Route</p><p className="font-mono text-sm bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700">/{onboardSuccessData.slug}/dashboard</p></div>
                       <div><p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Admin Email</p><p className="font-medium text-sm text-gray-900 dark:text-white">{onboardSuccessData.adminEmail}</p></div>
                       <div><p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Admin Password</p><p className="font-mono text-sm bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-400 p-2 rounded border border-amber-200 dark:border-amber-800 break-all">{onboardSuccessData.generatedPassword}</p></div>
+                      {onboardSuccessData.enabledModules && onboardSuccessData.enabledModules.length > 0 && (
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2">Enabled Modules</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {onboardSuccessData.enabledModules.map((m: string) => (
+                              <span key={m} className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 text-xs rounded-full border border-indigo-200 dark:border-indigo-800">{m}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex gap-3 pt-2">
@@ -310,8 +414,16 @@ export default function SuperAdminDashboard() {
                         <input type="text" value={onboardForm.adminPassword} onChange={e => setOnboardForm({...onboardForm, adminPassword: e.target.value})} className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none dark:bg-gray-800" placeholder="Auto-generated" />
                       </div>
                     </div>
+
+                    <div className="space-y-2 pt-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                        Module Access
+                        <span className="text-xs font-normal text-gray-500">({onboardModules.length} of {AVAILABLE_MODULES.length} enabled)</span>
+                      </label>
+                      <ModuleToggleGrid enabled={onboardModules} onToggle={toggleOnboardModule} />
+                    </div>
                     
-                    <div className="pt-6 flex justify-end gap-3">
+                    <div className="pt-4 flex justify-end gap-3">
                       <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</button>
                       <button type="submit" disabled={onboardLoading} className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium shadow-md transition-colors flex items-center gap-2">
                         {onboardLoading ? <LuLoader className="w-4 h-4 animate-spin" /> : 'Provision Tenant'}
@@ -425,7 +537,15 @@ export default function SuperAdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="pt-6 flex justify-end gap-3">
+                  <div className="space-y-2 pt-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      Module Access
+                      <span className="text-xs font-normal text-gray-500">({editModules.length} of {AVAILABLE_MODULES.length} enabled)</span>
+                    </label>
+                    <ModuleToggleGrid enabled={editModules} onToggle={toggleEditModule} />
+                  </div>
+
+                  <div className="pt-4 flex justify-end gap-3">
                     <button
                       type="button"
                       onClick={closeEditModal}

@@ -6,7 +6,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "businesses")
@@ -62,6 +64,13 @@ public class Business {
     @Column(name = "is_active", columnDefinition = "boolean default true")
     @Builder.Default
     private boolean isActive = true;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "business_enabled_modules", joinColumns = @JoinColumn(name = "business_id"))
+    @Column(name = "module")
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private Set<com.IMS.inventory_management_system.enums.Modules> enabledModules = new HashSet<>();
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

@@ -55,7 +55,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     
     const loadBusiness = async () => {
       try {
-        if (!businessId) {
+        if (!businessId || businessId === 'superadmin') {
           if (isMounted) setCurrentBusiness(null);
           return;
         }

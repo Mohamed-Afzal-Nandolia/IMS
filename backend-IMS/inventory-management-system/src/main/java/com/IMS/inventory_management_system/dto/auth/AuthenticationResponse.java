@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Set;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -16,4 +18,5 @@ public class AuthenticationResponse {
     private String businessSlug;
     private String userId;
     private String role;
+    private Set<com.IMS.inventory_management_system.enums.Modules> enabledModules;
 }

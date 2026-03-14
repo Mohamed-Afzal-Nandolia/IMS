@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Data
 @Builder
@@ -22,4 +23,5 @@ public class ClientBusinessResponse {
     private String adminEmail;
     private String generatedPassword; // only populated on onboarding
     private LocalDateTime createdAt;
+    private Set<com.IMS.inventory_management_system.enums.Modules> enabledModules;
 }

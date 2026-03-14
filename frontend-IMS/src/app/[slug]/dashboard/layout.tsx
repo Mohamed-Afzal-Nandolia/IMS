@@ -1,20 +1,33 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Topbar } from '@/components/layout/Topbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLoading from './loading';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter, useParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useRouter, useParams, usePathname } from 'next/navigation';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isAuthenticated, isLoading, businessSlug, role } = useAuth();
+  const { isAuthenticated, isLoading, businessSlug, role, enabledModules } = useAuth();
   const router = useRouter();
   const params = useParams();
+  const pathname = usePathname();
+
+  // Map URL path segments to module keys
+  const MODULE_ROUTE_MAP: Record<string, string> = {
+    products: 'PRODUCTS',
+    sales: 'SALES',
+    purchases: 'PURCHASES',
+    parties: 'PARTIES',
+    inventory: 'INVENTORY',
+    gst: 'GST',
+    accounting: 'ACCOUNTING',
+    reports: 'REPORTS',
+    settings: 'SETTINGS',
+  };
 
   useEffect(() => {
     if (isLoading) return;
@@ -28,8 +41,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Security check: ensure the URL slug matches the JWT claimed slug
     if (params?.slug && params.slug !== businessSlug) {
       router.replace(`/${businessSlug}/dashboard`);
+      return;
     }
-  }, [isAuthenticated, isLoading, businessSlug, role, params, router]);
+
+    // Module access guard: extract first path segment after /dashboard/
+    const dashboardBase = `/${params?.slug}/dashboard`;
+    if (pathname && pathname !== dashboardBase) {
+      const afterDash = pathname.slice(dashboardBase.length + 1); // e.g. 'products' or 'gst/gstr1'
+      const segment = afterDash.split('/')[0];
+      const requiredModule = MODULE_ROUTE_MAP[segment];
+      if (requiredModule && !enabledModules.includes(requiredModule)) {
+        router.replace(dashboardBase);
+      }
+    }
+  }, [isAuthenticated, isLoading, businessSlug, role, params, router, pathname, enabledModules]);
 
   if (isLoading || !isAuthenticated || (params?.slug && params.slug !== businessSlug)) {
     return <DashboardLoading />;
