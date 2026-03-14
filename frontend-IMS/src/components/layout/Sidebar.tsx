@@ -7,23 +7,23 @@ import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  LuLayoutDashboard,
   LuPackage,
   LuShoppingCart,
-  LuReceipt,
   LuUsers,
   LuWarehouse,
-  LuChartBar,
   LuFileText,
-  LuSettings,
-  LuIndianRupee,
-  LuBookOpen,
   LuChevronLeft,
   LuChevronDown,
   LuChevronRight,
   LuBell,
   LuBox,
 } from 'react-icons/lu';
+import { RxDashboard } from 'react-icons/rx';
+import { TbReceiptTax } from 'react-icons/tb';
+import { SlBookOpen } from 'react-icons/sl';
+import { BsGraphUpArrow } from 'react-icons/bs';
+import { IoSettingsOutline } from 'react-icons/io5';
+import { BiPurchaseTagAlt } from 'react-icons/bi';
 import { useState, useRef } from 'react';
 import { Portal } from '@/components/ui/Portal';
 
@@ -53,7 +53,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const dashBasePath = `/${slug}/dashboard`;
 
   const allNavItems: NavItem[] = [
-    { label: 'Dashboard', href: dashBasePath, icon: LuLayoutDashboard },
+    { label: 'Dashboard', href: dashBasePath, icon: RxDashboard },
     {
       label: 'Products',
       icon: LuPackage,
@@ -76,7 +76,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     },
     {
       label: 'Purchases',
-      icon: LuReceipt,
+      icon: BiPurchaseTagAlt,
       moduleKey: 'PURCHASES',
       children: [
         { label: 'Invoices', href: `${dashBasePath}/purchases` },
@@ -88,7 +88,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     { label: 'Inventory', href: `${dashBasePath}/inventory`, icon: LuBox, moduleKey: 'INVENTORY' },
     {
       label: 'GST & Tax',
-      icon: LuIndianRupee,
+      icon: TbReceiptTax,
       moduleKey: 'GST',
       children: [
         { label: 'GST Dashboard', href: `${dashBasePath}/gst` },
@@ -96,9 +96,9 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         { label: 'GSTR-3B', href: `${dashBasePath}/gst/gstr3b` },
       ],
     },
-    { label: 'Accounting', href: `${dashBasePath}/accounting`, icon: LuBookOpen, moduleKey: 'ACCOUNTING' },
-    { label: 'Reports', href: `${dashBasePath}/reports`, icon: LuChartBar, moduleKey: 'REPORTS' },
-    { label: 'Settings', href: `${dashBasePath}/settings`, icon: LuSettings, moduleKey: 'SETTINGS' },
+    { label: 'Accounting', href: `${dashBasePath}/accounting`, icon: SlBookOpen, moduleKey: 'ACCOUNTING' },
+    { label: 'Reports', href: `${dashBasePath}/reports`, icon: BsGraphUpArrow, moduleKey: 'REPORTS' },
+    { label: 'Settings', href: `${dashBasePath}/settings`, icon: IoSettingsOutline, moduleKey: 'SETTINGS' },
   ];
 
   // Show items that have no moduleKey (always visible) OR whose moduleKey is in enabledModules
