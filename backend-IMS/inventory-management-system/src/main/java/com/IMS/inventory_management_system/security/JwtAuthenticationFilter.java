@@ -67,8 +67,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
-        } catch (Exception ignored) {
-            // Invalid/expired JWT should be treated as unauthenticated request.
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            System.out.println("JWT EXPIRED: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"JWT token is expired\"}");
+            return;
+        } catch (Exception e) {
+            System.out.println("INVALID JWT: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Invalid JWT token\"}");
+            return;
         }
 
         filterChain.doFilter(request, response);
