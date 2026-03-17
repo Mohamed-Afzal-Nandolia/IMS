@@ -4,10 +4,13 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { LuX, LuLoader } from 'react-icons/lu';
 import type { Product, ProductFormData } from '@/hooks/useProducts';
+import { useEffect } from 'react';
+import { useCategories } from '@/hooks/useCategories';
+import { useDepartments } from '@/hooks/useDepartments';
+import { useBusiness } from '@/hooks/useBusiness';
 
 interface ProductFormModalProps {
   product: Product | null;
-  categories: Array<{ id: string; name: string }>;
   isSubmitting: boolean;
   onSubmit: (data: ProductFormData) => void;
   onClose: () => void;
@@ -15,11 +18,16 @@ interface ProductFormModalProps {
 
 export default function ProductFormModal({
   product,
-  categories,
   isSubmitting,
   onSubmit,
   onClose,
 }: ProductFormModalProps) {
+  const { data: allCategories } = useCategories();
+  const { data: allDepartments } = useDepartments();
+  const { data: businessData } = useBusiness();
+
+  const [selectedDept, setSelectedDept] = useState('');
+  const [selectedCat, setSelectedCat] = useState('');
   const [form, setForm] = useState<ProductFormData>({
     name: product?.name || '',
     sku: product?.sku || '',
@@ -29,14 +37,43 @@ export default function ProductFormModal({
     sellingPrice: product?.sellingPrice || 0,
     purchasePrice: product?.purchasePrice || 0,
     gstRate: product?.gstRate || 18,
-    currentStock: product?.currentStock || 0,
-    minStockLevel: product?.minStockLevel || 10,
+    minStockLevel: product?.minStockLevel ?? (businessData?.globalMinStockLevel || 10),
     description: product?.description || '',
     isActive: product?.isActive ?? true,
   });
 
+  //     isActive: product?.isActive ?? true,
+  // });
+
+  // Reverse engineer the dropdowns when editing an existing product
+  useEffect(() => {
+    if (allCategories && form.category_id && !selectedDept && !selectedCat) {
+      const leaf = allCategories.find((c) => c.id === form.category_id);
+      if (leaf) {
+        if (leaf.parent) {
+          setSelectedCat(leaf.parent.id);
+          const parentCat = allCategories.find((c) => c.id === leaf.parent!.id);
+          if (parentCat?.department) setSelectedDept(parentCat.department.id);
+        } else {
+          setSelectedCat(leaf.id);
+          if (leaf.department) setSelectedDept(leaf.department.id);
+        }
+      }
+    }
+  }, [allCategories, form.category_id, selectedDept, selectedCat]);
+
+  // Update minStockLevel when businessData loads if it's a new product and still default
+  useEffect(() => {
+    if (!product && businessData?.globalMinStockLevel && form.minStockLevel === 10) {
+      update('minStockLevel', businessData.globalMinStockLevel);
+    }
+  }, [businessData, product]);
+
   const update = (key: string, value: unknown) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const topLevelCats = allCategories?.filter(c => !c.parent && (!selectedDept || c.department?.id === selectedDept)) || [];
+  const subCats = allCategories?.filter(c => c.parent?.id === selectedCat) || [];
 
   return (
     <motion.div
@@ -51,7 +88,7 @@ export default function ProductFormModal({
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.95, y: 20 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white dark:bg-gray-900 rounded-2xl max-w-3xl w-full p-8 shadow-2xl max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-800"
+        className="bg-white dark:bg-gray-900 rounded-2xl max-w-3xl w-full p-5 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-800"
       >
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -150,14 +187,14 @@ export default function ProductFormModal({
             {/* SKU */}
             <div>
               <label htmlFor="prod-sku" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                SKU *
+                SKU
               </label>
               <input
                 id="prod-sku"
-                required
                 autoComplete="off"
                 spellCheck={false}
                 value={form.sku}
+                placeholder="Auto-generated if left blank"
                 onChange={(e) => update('sku', e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
               />
@@ -179,6 +216,28 @@ export default function ProductFormModal({
               />
             </div>
 
+            {/* Department */}
+            <div>
+              <label htmlFor="prod-dept" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Department
+              </label>
+              <select
+                id="prod-dept"
+                value={selectedDept}
+                onChange={(e) => {
+                  setSelectedDept(e.target.value);
+                  setSelectedCat('');
+                  update('category_id', null);
+                }}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
+              >
+                <option value="">Any Department</option>
+                {allDepartments?.map((d) => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+            </div>
+
             {/* Category */}
             <div>
               <label htmlFor="prod-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -186,12 +245,36 @@ export default function ProductFormModal({
               </label>
               <select
                 id="prod-category"
-                value={form.category_id || ''}
-                onChange={(e) => update('category_id', e.target.value || null)}
+                value={selectedCat}
+                onChange={(e) => {
+                  setSelectedCat(e.target.value);
+                  update('category_id', e.target.value || null);
+                }}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
               >
                 <option value="">No Category</option>
-                {categories.map((c) => (
+                {topLevelCats.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Subcategory */}
+            <div>
+              <label htmlFor="prod-subcategory" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Subcategory
+              </label>
+              <select
+                id="prod-subcategory"
+                value={subCats.some(c => c.id === form.category_id) ? form.category_id! : ''}
+                onChange={(e) => {
+                  update('category_id', e.target.value || selectedCat || null);
+                }}
+                disabled={!selectedCat || subCats.length === 0}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white disabled:opacity-50"
+              >
+                <option value="">No Subcategory</option>
+                {subCats.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
@@ -200,40 +283,6 @@ export default function ProductFormModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
             <div className="col-span-full pt-4 border-t border-gray-100 dark:border-gray-800/50 mb-2"><h3 className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Inventory Settings</h3></div>
-
-            {/* Current Stock */}
-            <div>
-              <label htmlFor="prod-stock" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Initial Stock Level
-              </label>
-              <input
-                id="prod-stock"
-                type="number"
-                min="0"
-                inputMode="numeric"
-                autoComplete="off"
-                value={form.currentStock || ''}
-                onChange={(e) => update('currentStock', Number(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
-              />
-            </div>
-
-            {/* Min Stock Level */}
-            <div>
-              <label htmlFor="prod-minstock" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Minimum Stock Alert
-              </label>
-              <input
-                id="prod-minstock"
-                type="number"
-                min="0"
-                inputMode="numeric"
-                autoComplete="off"
-                value={form.minStockLevel || ''}
-                onChange={(e) => update('minStockLevel', Number(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
-              />
-            </div>
 
             {/* Unit */}
             <div>
@@ -250,6 +299,22 @@ export default function ProductFormModal({
                   <option key={u} value={u}>{u}</option>
                 ))}
               </select>
+            </div>
+            {/* Min Stock Level */}
+            <div>
+              <label htmlFor="prod-minstock" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Minimum Stock Alert
+              </label>
+              <input
+                id="prod-minstock"
+                type="number"
+                min="0"
+                inputMode="numeric"
+                autoComplete="off"
+                value={form.minStockLevel || ''}
+                onChange={(e) => update('minStockLevel', Number(e.target.value))}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
+              />
             </div>
           </div>
 

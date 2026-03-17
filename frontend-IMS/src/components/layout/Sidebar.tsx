@@ -60,8 +60,18 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       moduleKey: 'PRODUCTS',
       children: [
         { label: 'All Products', href: `${dashBasePath}/products` },
-        { label: 'Categories', href: `${dashBasePath}/products/categories` },
+        { label: 'Hierarchy', href: `${dashBasePath}/products/categories` },
         { label: 'Stock Adjust', href: `${dashBasePath}/products/stock-adjust` },
+      ],
+    },
+    {
+      label: 'Purchase',
+      icon: BiPurchaseTagAlt,
+      moduleKey: 'PURCHASES',
+      children: [
+        { label: 'Invoices', href: `${dashBasePath}/purchases` },
+        { label: 'Orders', href: `${dashBasePath}/purchases/orders` },
+        { label: 'Returns', href: `${dashBasePath}/purchases/returns` },
       ],
     },
     {
@@ -75,19 +85,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       ],
     },
     {
-      label: 'Purchases',
-      icon: BiPurchaseTagAlt,
-      moduleKey: 'PURCHASES',
-      children: [
-        { label: 'Invoices', href: `${dashBasePath}/purchases` },
-        { label: 'Orders', href: `${dashBasePath}/purchases/orders` },
-        { label: 'Returns', href: `${dashBasePath}/purchases/returns` },
-      ],
-    },
-    { label: 'Parties', href: `${dashBasePath}/parties`, icon: LuUsers, moduleKey: 'PARTIES' },
-    { label: 'Inventory', href: `${dashBasePath}/inventory`, icon: LuBox, moduleKey: 'INVENTORY' },
-    {
-      label: 'GST & Tax',
+      label: 'GST',
       icon: TbReceiptTax,
       moduleKey: 'GST',
       children: [
@@ -97,6 +95,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       ],
     },
     { label: 'Accounting', href: `${dashBasePath}/accounting`, icon: SlBookOpen, moduleKey: 'ACCOUNTING' },
+    { label: 'Inventory', href: `${dashBasePath}/inventory`, icon: LuBox, moduleKey: 'INVENTORY' },
+    { label: 'Parties', href: `${dashBasePath}/parties`, icon: LuUsers, moduleKey: 'PARTIES' },
     { label: 'Reports', href: `${dashBasePath}/reports`, icon: BsGraphUpArrow, moduleKey: 'REPORTS' },
     { label: 'Settings', href: `${dashBasePath}/settings`, icon: IoSettingsOutline, moduleKey: 'SETTINGS' },
   ];

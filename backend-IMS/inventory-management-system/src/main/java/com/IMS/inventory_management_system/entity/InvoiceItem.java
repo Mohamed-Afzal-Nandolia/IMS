@@ -29,18 +29,23 @@ public class InvoiceItem {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    @Builder.Default
     @Column(precision = 10, scale = 2, columnDefinition = "decimal(10,2) default 1")
     private BigDecimal quantity = BigDecimal.ONE;
 
+    @Builder.Default
     @Column(name = "unit_price", precision = 10, scale = 2)
     private BigDecimal unitPrice = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(name = "tax_rate", precision = 5, scale = 2)
     private BigDecimal taxRate = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(name = "tax_amount", precision = 10, scale = 2)
     private BigDecimal taxAmount = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(name = "total_price", precision = 15, scale = 2)
     private BigDecimal totalPrice = BigDecimal.ZERO;
 

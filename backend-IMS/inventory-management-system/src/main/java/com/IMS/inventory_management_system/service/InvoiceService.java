@@ -4,6 +4,7 @@ import com.IMS.inventory_management_system.dto.InvoiceRequest;
 import com.IMS.inventory_management_system.entity.Invoice;
 import com.IMS.inventory_management_system.entity.InvoiceItem;
 import com.IMS.inventory_management_system.entity.Product;
+import com.IMS.inventory_management_system.repository.BusinessRepository;
 import com.IMS.inventory_management_system.repository.InvoiceItemRepository;
 import com.IMS.inventory_management_system.repository.InvoiceRepository;
 import com.IMS.inventory_management_system.repository.PartyRepository;
@@ -26,6 +27,7 @@ public class InvoiceService {
     private final InvoiceItemRepository invoiceItemRepository;
     private final PartyRepository partyRepository;
     private final ProductRepository productRepository;
+    private final BusinessRepository businessRepository;
 
     public List<Invoice> getAllInvoices(String type) {
         String businessId = SecurityUtils.getCurrentBusinessId();
@@ -43,16 +45,34 @@ public class InvoiceService {
     public Invoice createInvoice(InvoiceRequest request) {
         Invoice invoice = request.getInvoice();
         invoice.setId(UUID.randomUUID().toString());
-        invoice.setBusiness(SecurityUtils.getCurrentUser().getBusiness());
+        com.IMS.inventory_management_system.entity.Business business = businessRepository.findById(SecurityUtils.getCurrentBusinessId())
+                .orElseThrow(() -> new RuntimeException("Business not found"));
+        invoice.setBusiness(business);
 
         if (invoice.getIssueDate() == null)
             invoice.setIssueDate(LocalDate.now());
-        if (invoice.getStatus() == null)
-            invoice.setStatus("completed"); // Or derived based on payment
 
         // Validate Party
         if (invoice.getParty() != null && invoice.getParty().getId() != null) {
             partyRepository.findById(invoice.getParty().getId()).ifPresent(invoice::setParty);
+        }
+
+        // Auto-generate invoice number if not provided
+        if (invoice.getInvoiceNumber() == null || invoice.getInvoiceNumber().trim().isEmpty()) {
+            String prefix = business.getInvoicePrefix() != null ? business.getInvoicePrefix() : "INV";
+
+            if ("purchase".equalsIgnoreCase(invoice.getType())
+                    || "purchase_return".equalsIgnoreCase(invoice.getType())) {
+                String pPrefix = business.getPurchaseInvoicePrefix() != null ? business.getPurchaseInvoicePrefix() : "PUR";
+                int counter = business.getPurchaseInvoiceCounter() != null ? business.getPurchaseInvoiceCounter() : 1;
+                invoice.setInvoiceNumber(String.format("%s-%05d", pPrefix, counter));
+                business.setPurchaseInvoiceCounter(counter + 1);
+            } else {
+                int counter = business.getSalesInvoiceCounter() != null ? business.getSalesInvoiceCounter() : 1;
+                invoice.setInvoiceNumber(String.format("%s-%05d", prefix, counter));
+                business.setSalesInvoiceCounter(counter + 1);
+            }
+            businessRepository.save(business);
         }
 
         Invoice savedInvoice = invoiceRepository.save(invoice);
@@ -71,12 +91,14 @@ public class InvoiceService {
                 invoiceItemRepository.save(item);
 
                 // Update Stock based on transaction type
+                BigDecimal currentStock = product.getCurrentStock() != null ? product.getCurrentStock()
+                        : BigDecimal.ZERO;
                 if ("sale".equalsIgnoreCase(invoice.getType())
                         || "purchase_return".equalsIgnoreCase(invoice.getType())) {
-                    product.setCurrentStock(product.getCurrentStock().subtract(item.getQuantity()));
+                    product.setCurrentStock(currentStock.subtract(item.getQuantity()));
                 } else if ("purchase".equalsIgnoreCase(invoice.getType())
                         || "sales_return".equalsIgnoreCase(invoice.getType())) {
-                    product.setCurrentStock(product.getCurrentStock().add(item.getQuantity()));
+                    product.setCurrentStock(currentStock.add(item.getQuantity()));
                 }
                 productRepository.save(product);
             }

@@ -2,6 +2,7 @@ package com.IMS.inventory_management_system.service;
 
 import com.IMS.inventory_management_system.entity.Category;
 import com.IMS.inventory_management_system.repository.CategoryRepository;
+import com.IMS.inventory_management_system.repository.DepartmentRepository;
 import com.IMS.inventory_management_system.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import java.util.UUID;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final DepartmentRepository departmentRepository;
 
     public List<Category> getAllCategories() {
         String businessId = SecurityUtils.getCurrentBusinessId();
@@ -28,6 +30,15 @@ public class CategoryService {
         category.setBusiness(SecurityUtils.getCurrentUser().getBusiness());
         if (category.getIsActive() == null)
             category.setIsActive(true);
+
+        if (category.getDepartment() != null && category.getDepartment().getId() != null) {
+            departmentRepository.findById(category.getDepartment().getId()).ifPresent(category::setDepartment);
+        }
+
+        if (category.getParent() != null && category.getParent().getId() != null) {
+            categoryRepository.findById(category.getParent().getId()).ifPresent(category::setParent);
+        }
+
         return categoryRepository.save(category);
     }
 
@@ -46,6 +57,23 @@ public class CategoryService {
         if (updatedCategory.getIsActive() != null) {
             existing.setIsActive(updatedCategory.getIsActive());
         }
+
+        if (updatedCategory.getDepartment() != null) {
+            if (updatedCategory.getDepartment().getId() != null) {
+                departmentRepository.findById(updatedCategory.getDepartment().getId()).ifPresent(existing::setDepartment);
+            } else {
+                existing.setDepartment(null);
+            }
+        }
+
+        if (updatedCategory.getParent() != null) {
+            if (updatedCategory.getParent().getId() != null) {
+                categoryRepository.findById(updatedCategory.getParent().getId()).ifPresent(existing::setParent);
+            } else {
+                existing.setParent(null);
+            }
+        }
+
         return categoryRepository.save(existing);
     }
 

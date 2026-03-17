@@ -47,23 +47,46 @@ public class Business {
 
     // Invoice Settings
     private String invoicePrefix;
+    @Column(length = 20, columnDefinition = "varchar(20) default 'PUR'")
+    @Builder.Default
+    private String purchaseInvoicePrefix = "PUR";
     @Column(columnDefinition = "TEXT")
     private String invoiceTerms;
     @Column(columnDefinition = "TEXT")
     private String invoiceNotes;
-    private boolean showBankDetails;
-    private boolean showUpiQr;
-    private boolean showDigitalSignature;
+    private Boolean showBankDetails;
+    private Boolean showUpiQr;
+    private Boolean showDigitalSignature;
 
     // Notifications
-    private boolean lowStockAlert;
-    private boolean newInvoiceAlert;
-    private boolean paymentReceivedAlert;
-    private boolean overdueInvoicesAlert;
+    private Boolean lowStockAlert;
+    private Boolean newInvoiceAlert;
+    private Boolean paymentReceivedAlert;
+    private Boolean overdueInvoicesAlert;
+    
+    @Column(columnDefinition = "integer default 10")
+    @Builder.Default
+    private Integer globalMinStockLevel = 10;
+    
+    @Column(columnDefinition = "varchar(20) default 'SKU'")
+    @Builder.Default
+    private String skuPrefix = "SKU";
+    
+    @Column(columnDefinition = "integer default 1")
+    @Builder.Default
+    private Integer skuCounter = 1;
+    
+    @Column(columnDefinition = "integer default 1")
+    @Builder.Default
+    private Integer purchaseInvoiceCounter = 1;
+
+    @Column(columnDefinition = "integer default 1")
+    @Builder.Default
+    private Integer salesInvoiceCounter = 1;
 
     @Column(name = "is_active", columnDefinition = "boolean default true")
     @Builder.Default
-    private boolean isActive = true;
+    private Boolean isActive = true;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "business_enabled_modules", joinColumns = @JoinColumn(name = "business_id"))

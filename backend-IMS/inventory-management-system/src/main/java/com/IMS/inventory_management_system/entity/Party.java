@@ -42,9 +42,11 @@ public class Party {
     @Column(name = "shipping_address", columnDefinition = "TEXT")
     private String shippingAddress;
 
+    @Builder.Default
     @Column(name = "current_balance", precision = 15, scale = 2)
     private BigDecimal currentBalance = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(name = "is_active", columnDefinition = "boolean default true")
     private Boolean isActive = true;
 

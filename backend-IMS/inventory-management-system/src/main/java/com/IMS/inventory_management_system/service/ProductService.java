@@ -1,6 +1,7 @@
 package com.IMS.inventory_management_system.service;
 
 import com.IMS.inventory_management_system.entity.Product;
+import com.IMS.inventory_management_system.repository.BusinessRepository;
 import com.IMS.inventory_management_system.repository.CategoryRepository;
 import com.IMS.inventory_management_system.repository.ProductRepository;
 import com.IMS.inventory_management_system.util.SecurityUtils;
@@ -17,6 +18,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final BusinessRepository businessRepository;
 
     public List<Product> getAllProducts() {
         return productRepository.findByBusinessId(SecurityUtils.getCurrentBusinessId());
@@ -29,12 +31,39 @@ public class ProductService {
     @Transactional
     public Product createProduct(Product product) {
         product.setId(UUID.randomUUID().toString());
-        product.setBusiness(SecurityUtils.getCurrentUser().getBusiness());
+        com.IMS.inventory_management_system.entity.Business business = businessRepository.findById(SecurityUtils.getCurrentBusinessId())
+                .orElseThrow(() -> new RuntimeException("Business not found"));
+        product.setBusiness(business);
 
         // Ensure category validation
         if (product.getCategory() != null && product.getCategory().getId() != null) {
             categoryRepository.findById(product.getCategory().getId())
                     .ifPresent(product::setCategory);
+        }
+
+        // Initialize default values for stock and prices if null
+        if (product.getCurrentStock() == null)
+            product.setCurrentStock(java.math.BigDecimal.ZERO);
+        if (product.getPurchasePrice() == null)
+            product.setPurchasePrice(java.math.BigDecimal.ZERO);
+        if (product.getSellingPrice() == null)
+            product.setSellingPrice(java.math.BigDecimal.ZERO);
+        if (product.getMrp() == null)
+            product.setMrp(java.math.BigDecimal.ZERO);
+        if (product.getMinStockLevel() == null || product.getMinStockLevel().compareTo(java.math.BigDecimal.ZERO) == 0) {
+            product.setMinStockLevel(java.math.BigDecimal.valueOf(business.getGlobalMinStockLevel()));
+        }
+
+        // Auto-generate SKU if not provided
+        if (product.getSku() == null || product.getSku().trim().isEmpty()) {
+            String prefix = business.getSkuPrefix() != null ? business.getSkuPrefix() : "SKU";
+            int counter = business.getSkuCounter() != null ? business.getSkuCounter() : 1;
+
+            product.setSku(String.format("%s-%04d", prefix, counter));
+
+            // Increment and save counter
+            business.setSkuCounter(counter + 1);
+            businessRepository.save(business);
         }
 
         return productRepository.save(product);

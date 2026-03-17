@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LuSettings, LuBuilding2, LuUser, LuBell, LuShield, LuLoader, LuSave } from 'react-icons/lu';
+import { LuSettings, LuBuilding2, LuUser, LuBell, LuShield, LuLoader, LuSave, LuPlus, LuX } from 'react-icons/lu';
 import { useToast } from '@/components/ui/Toast';
 import api from '@/lib/api';
 
@@ -13,6 +13,7 @@ const tabs = [
   { id: 'business', label: 'Business Profile', icon: LuBuilding2 },
   { id: 'invoice', label: 'Invoice Settings', icon: LuSettings },
   { id: 'notifications', label: 'Notifications', icon: LuBell },
+  { id: 'templates', label: 'Product Templates', icon: LuPlus },
   { id: 'security', label: 'Security', icon: LuShield },
 ];
 
@@ -26,9 +27,11 @@ export default function SettingsPage() {
   const [business, setBusiness] = useState({
     id: '', name: '', gstin: '', phone: '', email: '', address: '', city: '', state: '', pincode: '',
     bankName: '', accountNumber: '', ifscCode: '', upiId: '',
-    invoicePrefix: 'INV', invoiceTerms: '', invoiceNotes: '',
+    invoicePrefix: 'INV', purchaseInvoicePrefix: 'PUR', skuPrefix: 'PROD', invoiceTerms: '', invoiceNotes: '',
     showBankDetails: true, showUpiQr: true, showDigitalSignature: true,
     lowStockAlert: true, newInvoiceAlert: true, paymentReceivedAlert: true, overdueInvoicesAlert: true,
+    globalMinStockLevel: 5, salesInvoiceCounter: 1, purchaseInvoiceCounter: 1, skuCounter: 1,
+    slug: '', isActive: true,
   });
 
   useEffect(() => {
@@ -55,7 +58,28 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put('/business', business);
+      // Send only config-related fields to avoid overwhelming the server
+      const { 
+        id, name, slug, gstin, phone, email, address, city, state, pincode, 
+        bankName, accountNumber, ifscCode, upiId,
+        invoicePrefix, purchaseInvoicePrefix, skuPrefix, invoiceTerms, invoiceNotes,
+        showBankDetails, showUpiQr, showDigitalSignature,
+        lowStockAlert, newInvoiceAlert, paymentReceivedAlert, overdueInvoicesAlert,
+        globalMinStockLevel, salesInvoiceCounter, purchaseInvoiceCounter, skuCounter,
+        isActive
+      } = business;
+      
+      const payload = { 
+        id, name, slug, gstin, phone, email, address, city, state, pincode, 
+        bankName, accountNumber, ifscCode, upiId,
+        invoicePrefix, purchaseInvoicePrefix, skuPrefix, invoiceTerms, invoiceNotes,
+        showBankDetails, showUpiQr, showDigitalSignature,
+        lowStockAlert, newInvoiceAlert, paymentReceivedAlert, overdueInvoicesAlert,
+        globalMinStockLevel, salesInvoiceCounter, purchaseInvoiceCounter, skuCounter,
+        isActive 
+      };
+
+      await api.put('/business', payload);
       addToast({ type: 'success', title: 'Settings Saved', message: 'Your business profile and preferences have been updated.' });
     } catch (err: any) {
       addToast({ type: 'error', title: 'Save Failed', message: err.message || 'Could not save settings to the server.' });
@@ -116,8 +140,14 @@ export default function SettingsPage() {
 
         {activeTab === 'invoice' && (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Invoice Configuration</h2>
-            <div><label className="block text-sm font-medium mb-1">Invoice Prefix</label><input value={business.invoicePrefix || ''} onChange={(e) => updateBusiness('invoicePrefix', e.target.value)} className="w-full max-w-xs px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none" /></div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Invoice & SKU Configuration</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div><label className="block text-sm font-medium mb-1">Sales Prefix</label><input value={business.invoicePrefix || ''} onChange={(e) => updateBusiness('invoicePrefix', e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none" /></div>
+              <div><label className="block text-sm font-medium mb-1">Sales Next Number</label><input type="number" value={business.salesInvoiceCounter || 1} onChange={(e) => updateBusiness('salesInvoiceCounter', Number(e.target.value))} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none" /></div>
+              <div><label className="block text-sm font-medium mb-1">Purchase Prefix</label><input value={business.purchaseInvoicePrefix || ''} onChange={(e) => updateBusiness('purchaseInvoicePrefix', e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none" /></div>
+              <div><label className="block text-sm font-medium mb-1">Purchase Next Number</label><input type="number" value={business.purchaseInvoiceCounter || 1} onChange={(e) => updateBusiness('purchaseInvoiceCounter', Number(e.target.value))} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none" /></div>
+              <div><label className="block text-sm font-medium mb-1">SKU Prefix</label><input value={business.skuPrefix || ''} onChange={(e) => updateBusiness('skuPrefix', e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none" /></div>
+            </div>
             <div><label className="block text-sm font-medium mb-1">Terms & Conditions</label><textarea rows={3} value={business.invoiceTerms || ''} onChange={(e) => updateBusiness('invoiceTerms', e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none resize-none" /></div>
             <div><label className="block text-sm font-medium mb-1">Default Notes</label><textarea rows={2} value={business.invoiceNotes || ''} onChange={(e) => updateBusiness('invoiceNotes', e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none resize-none" /></div>
             <div className="space-y-3 pt-2">
@@ -135,7 +165,14 @@ export default function SettingsPage() {
 
         {activeTab === 'notifications' && (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Notification Preferences</h2>
+            <div className="bg-indigo-50/50 dark:bg-indigo-900/10 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-900/20 mb-6">
+              <label className="block text-sm font-semibold text-indigo-900 dark:text-indigo-300 mb-2">Global Minimum Stock Level</label>
+              <div className="flex items-center gap-4">
+                <input type="number" min="0" value={business.globalMinStockLevel || 0} onChange={(e) => updateBusiness('globalMinStockLevel', Number(e.target.value))} className="w-24 px-4 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-gray-900 text-sm outline-none" />
+                <p className="text-xs text-indigo-600 dark:text-indigo-400">Default alert level for all products without an individual setting.</p>
+              </div>
+            </div>
+
             {[{ label: 'Low Stock Alerts', key: 'lowStockAlert', desc: 'Get notified when products go below minimum stock' },
               { label: 'New Invoice', key: 'newInvoiceAlert', desc: 'Notification when a new invoice is created' },
               { label: 'Payment Received', key: 'paymentReceivedAlert', desc: 'Alert when a payment is recorded' },
@@ -149,6 +186,10 @@ export default function SettingsPage() {
               </div>
             ))}
           </div>
+        )}
+
+        {activeTab === 'templates' && (
+          <ProductTemplatesSection />
         )}
 
         {activeTab === 'security' && (
@@ -165,3 +206,95 @@ export default function SettingsPage() {
     </motion.div>
   );
 }
+
+import { useProductTemplates, useCreateProductTemplate, useUpdateProductTemplate, useDeleteProductTemplate } from '@/hooks/useProductTemplates';
+import { LuPlus as LuPlusIcon, LuTrash2 as LuTrashIcon } from 'react-icons/lu';
+
+function ProductTemplatesSection() {
+  const { data: templates, isLoading } = useProductTemplates();
+  const createTemplate = useCreateProductTemplate();
+  const updateTemplate = useUpdateProductTemplate();
+  const deleteTemplate = useDeleteProductTemplate();
+  const { addToast } = useToast();
+
+  const [newTemplateName, setNewTemplateName] = useState('');
+
+  const handleAddValue = async (templateId: string, template: any) => {
+    const val = prompt('Enter new value (e.g. Red, XL, Cotton):');
+    if (!val) return;
+    
+    const updatedValues = [...(template.values || []), { value: val }];
+    try {
+      await updateTemplate.mutateAsync({ id: templateId, values: updatedValues as any });
+      addToast({ type: 'success', title: 'Value Added' });
+    } catch (err: any) {
+      addToast({ type: 'error', title: 'Error', message: err.message });
+    }
+  };
+
+  const handleRemoveValue = async (templateId: string, template: any, valueId: string) => {
+    const updatedValues = (template.values || []).filter((v: any) => v.id !== valueId);
+    try {
+      await updateTemplate.mutateAsync({ id: templateId, values: updatedValues as any });
+      addToast({ type: 'success', title: 'Value Removed' });
+    } catch (err: any) {
+      addToast({ type: 'error', title: 'Error', message: err.message });
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!newTemplateName) return;
+    try {
+      await createTemplate.mutateAsync({ name: newTemplateName, values: [] });
+      setNewTemplateName('');
+      addToast({ type: 'success', title: 'Template Created' });
+    } catch (err: any) {
+      addToast({ type: 'error', title: 'Error', message: err.message });
+    }
+  };
+
+  if (isLoading) return <div className="py-10 flex justify-center"><LuLoader className="animate-spin" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Product Templates</h2>
+        <p className="text-sm text-gray-500 mb-4">Define master attributes like Sizes, Colors, or Materials to use in product entries.</p>
+        
+        <div className="flex gap-2 mb-8">
+          <input value={newTemplateName} onChange={e => setNewTemplateName(e.target.value)} placeholder="New Template (e.g. Size)" className="flex-1 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none" />
+          <button onClick={handleCreate} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-indigo-700 transition-all">
+            <LuPlusIcon className="w-4 h-4" /> Add
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {(templates || []).map((t) => (
+            <div key={t.id} className="p-4 rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-gray-900 dark:text-white capitalize">{t.name}</h3>
+                <button onClick={() => deleteTemplate.mutate(t.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors">
+                  <LuTrashIcon className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(t.values || []).map((v) => (
+                  <span key={v.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300">
+                    {v.value}
+                    <button onClick={() => handleRemoveValue(t.id, t, v.id)} className="hover:text-red-500 transition-colors">
+                      <LuX className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+                <button onClick={() => handleAddValue(t.id, t)} className="px-2.5 py-1 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 text-xs text-indigo-600 font-medium hover:border-indigo-400 transition-all">
+                  + Add
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+

@@ -9,15 +9,17 @@ export function useDashboardStats(range: TimeRange = '6months') {
     return useQuery({
         queryKey: ['dashboard', 'stats', range],
         queryFn: async () => {
-            // Concurrent API calls to our backend endpoints
-            // Requesting a larger page size to ensure we have enough data for aggregation
             const params = { pageSize: 1000 };
-            const [salesRes, purchasesRes, productsRes, partiesRes] = await Promise.all([
+            const [salesRes, purchasesRes, productsRes, partiesRes, businessRes] = await Promise.all([
                 api.get('/invoices', { params: { ...params, type: 'sale' } }),
                 api.get('/invoices', { params: { ...params, type: 'purchase' } }),
                 api.get('/products', { params }),
-                api.get('/parties', { params })
+                api.get('/parties', { params }),
+                api.get('/business/me')
             ]);
+
+            const business = businessRes.data;
+            const globalMinStock = business?.globalMinStockLevel || 10;
 
             const getArray = (res: any) => {
                 const data = res.data;
@@ -47,7 +49,6 @@ export function useDashboardStats(range: TimeRange = '6months') {
                 for (let i = days - 1; i >= 0; i--) {
                     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
                     const dateStr = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-
                     const dayStart = new Date(d.setHours(0, 0, 0, 0));
                     const dayEnd = new Date(d.setHours(23, 59, 59, 999));
 
@@ -106,7 +107,10 @@ export function useDashboardStats(range: TimeRange = '6months') {
             }
 
             const lowStockItems = products
-                .filter((p: any) => (p.currentStock ?? 0) > 0 && (p.currentStock ?? 0) < 20)
+                .filter((p: any) => {
+                    const threshold = p.minStockLevel || globalMinStock;
+                    return (p.currentStock ?? 0) > 0 && (p.currentStock ?? 0) < threshold;
+                })
                 .sort((a: any, b: any) => (a.currentStock ?? 0) - (b.currentStock ?? 0))
                 .slice(0, 10);
 
@@ -128,7 +132,7 @@ export function useDashboardStats(range: TimeRange = '6months') {
                 totalSalesTax,
             };
         },
-        refetchInterval: 30000, // Refresh every 30s
+        refetchInterval: 30000, 
         placeholderData: (previousData) => previousData,
     });
 }

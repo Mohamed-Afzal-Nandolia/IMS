@@ -171,7 +171,7 @@ public class SuperAdminService {
     public ClientBusinessResponse toggleActive(String businessId) {
         Business b = businessRepository.findById(businessId)
                 .orElseThrow(() -> new IllegalArgumentException("Business not found: " + businessId));
-        b.setActive(!b.isActive());
+        b.setIsActive(b.getIsActive() == null || !b.getIsActive());
         businessRepository.save(b);
         String adminEmail = userRepository.findFirstByBusinessId(b.getId())
                 .map(User::getEmail)
@@ -219,7 +219,7 @@ public class SuperAdminService {
                 .email(business.getEmail())
                 .phone(business.getPhone())
                 .gstin(business.getGstin())
-                .active(business.isActive())
+                .active(business.getIsActive())
                 .adminEmail(adminEmail)
                 .generatedPassword(generatedPassword)
                 .createdAt(business.getCreatedAt())

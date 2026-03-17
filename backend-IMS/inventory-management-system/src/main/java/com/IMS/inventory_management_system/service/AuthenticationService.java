@@ -32,6 +32,7 @@ public class AuthenticationService {
         private final JwtService jwtService;
         private final RefreshTokenService refreshTokenService;
         private final AuthenticationManager authenticationManager;
+        private final ProductTemplateService productTemplateService;
 
         @Transactional
         public AuthenticationResponse register(RegisterRequest request) {
@@ -50,6 +51,9 @@ public class AuthenticationService {
                                 .isActive(true)
                                 .build();
                 businessRepository.save(business);
+
+                // Seed default master data templates for this newly created business
+                productTemplateService.seedDefaultTemplates(business);
 
                 // Create the Admin User for this Business
                 User user = User.builder()
@@ -169,7 +173,7 @@ public class AuthenticationService {
                 if (user == null || "ROLE_SUPER_ADMIN".equals(user.getRole())) {
                         return;
                 }
-                if (user.getBusiness() != null && !user.getBusiness().isActive()) {
+                if (user.getBusiness() != null && (user.getBusiness().getIsActive() == null || !user.getBusiness().getIsActive())) {
                         refreshTokenService.revokeAllForUser(user.getId());
                         throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                                         "Account suspended. Please contact support.");

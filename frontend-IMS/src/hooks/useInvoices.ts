@@ -29,7 +29,6 @@ export interface Invoice {
     igstAmount: number;
     totalAmount: number;
     amountPaid?: number;
-    status: string;
     notes: string;
     createdAt: string;
     updatedAt: string;
@@ -48,24 +47,22 @@ export interface InvoiceFormData {
     igstAmount: number;
     totalAmount: number;
     amountPaid?: number;
-    status?: string;
     notes?: string;
     items: InvoiceItem[];
 }
 
 interface UseInvoicesOptions {
     type?: string;
-    status?: string;
     search?: string;
     page?: number;
     pageSize?: number;
 }
 
 export function useInvoices(options: UseInvoicesOptions = {}) {
-    const { type = 'sale', status = 'all', search = '', page = 1, pageSize = 20 } = options;
+    const { type = 'sale', search = '', page = 1, pageSize = 20 } = options;
 
     return useQuery({
-        queryKey: ['invoices', type, status, search, page, pageSize],
+        queryKey: ['invoices', type, search, page, pageSize],
         queryFn: async () => {
             const { data } = await api.get<Invoice[]>('/invoices', {
                 params: { type }
@@ -73,9 +70,6 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
 
             let filtered = Array.isArray(data) ? data : [];
 
-            if (status && status !== 'all') {
-                filtered = filtered.filter(i => i.status === status);
-            }
             if (search) {
                 const searchLower = search.toLowerCase();
                 filtered = filtered.filter(i => i.invoiceNumber?.toLowerCase().includes(searchLower));
@@ -97,15 +91,6 @@ export function useCreateInvoice() {
         mutationFn: async (invoiceData: InvoiceFormData) => {
             const { items, type, partyId, ...invoiceFields } = invoiceData;
 
-            // Generate invoice number
-            const prefix = type === 'sale' ? 'INV' :
-                type === 'purchase' ? 'PUR' :
-                    type === 'quotation' ? 'QUO' :
-                        type === 'sale_return' ? 'SRN' :
-                            type === 'purchase_return' ? 'PRN' :
-                                type === 'purchase_order' ? 'PO' : 'DOC';
-            const invoiceNumber = `${prefix}-${Date.now().toString(36).toUpperCase()}`;
-
             const payloadItems = items.map(item => ({
                 product: { id: item.productId },
                 quantity: item.quantity,
@@ -119,7 +104,6 @@ export function useCreateInvoice() {
                 invoice: {
                     ...invoiceFields,
                     type,
-                    invoiceNumber,
                     party: { id: partyId }
                 },
                 items: payloadItems

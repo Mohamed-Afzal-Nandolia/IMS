@@ -34,6 +34,7 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    @Builder.Default
     @Column(length = 50, columnDefinition = "varchar(50) default 'ROLE_USER'")
     private String role = "ROLE_USER";
 

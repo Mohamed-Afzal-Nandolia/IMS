@@ -42,36 +42,42 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @Builder.Default
     @Column(length = 50, columnDefinition = "varchar(50) default 'pcs'")
     private String unit = "pcs";
 
+    @Builder.Default
     @Column(name = "selling_price", precision = 10, scale = 2)
     private BigDecimal sellingPrice = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(name = "purchase_price", precision = 10, scale = 2)
     private BigDecimal purchasePrice = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(precision = 10, scale = 2)
     private BigDecimal mrp = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(name = "gst_rate", precision = 5, scale = 2)
     private BigDecimal gstRate = new BigDecimal("18.00");
 
+    @Builder.Default
     @Column(name = "cess_rate", precision = 5, scale = 2)
     private BigDecimal cessRate = BigDecimal.ZERO;
 
-    @Column(name = "current_stock", precision = 10, scale = 2)
+    @Builder.Default
+    @Column(name = "current_stock", precision = 10, scale = 2, nullable = false, columnDefinition = "decimal(10,2) default 0.00")
     private BigDecimal currentStock = BigDecimal.ZERO;
 
-    @Column(name = "opening_stock", precision = 10, scale = 2)
-    private BigDecimal openingStock = BigDecimal.ZERO;
-
+    @Builder.Default
     @Column(name = "min_stock_level", precision = 10, scale = 2)
     private BigDecimal minStockLevel = new BigDecimal("10.00");
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Builder.Default
     @Column(name = "is_active", columnDefinition = "boolean default true")
     private Boolean isActive = true;
 
@@ -82,4 +88,10 @@ public class Product {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isLowStock")
+    public boolean isLowStock() {
+        if (currentStock == null || minStockLevel == null) return false;
+        return currentStock.compareTo(minStockLevel) <= 0;
+    }
 }

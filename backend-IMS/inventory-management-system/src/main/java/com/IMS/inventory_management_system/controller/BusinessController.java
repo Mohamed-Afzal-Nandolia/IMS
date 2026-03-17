@@ -14,7 +14,7 @@ public class BusinessController {
 
     private final BusinessRepository businessRepository;
 
-    @GetMapping
+    @GetMapping({"", "/me"})
     public ResponseEntity<Business> getBusiness() {
         String id = SecurityUtils.getCurrentBusinessId();
         return businessRepository.findById(id)
@@ -43,17 +43,33 @@ public class BusinessController {
 
         // Invoice Settings
         existing.setInvoicePrefix(request.getInvoicePrefix());
+        existing.setPurchaseInvoicePrefix(request.getPurchaseInvoicePrefix());
         existing.setInvoiceTerms(request.getInvoiceTerms());
         existing.setInvoiceNotes(request.getInvoiceNotes());
-        existing.setShowBankDetails(request.isShowBankDetails());
-        existing.setShowUpiQr(request.isShowUpiQr());
-        existing.setShowDigitalSignature(request.isShowDigitalSignature());
+        existing.setShowBankDetails(request.getShowBankDetails());
+        existing.setShowUpiQr(request.getShowUpiQr());
+        existing.setShowDigitalSignature(request.getShowDigitalSignature());
 
-        // Notifications
-        existing.setLowStockAlert(request.isLowStockAlert());
-        existing.setNewInvoiceAlert(request.isNewInvoiceAlert());
-        existing.setPaymentReceivedAlert(request.isPaymentReceivedAlert());
-        existing.setOverdueInvoicesAlert(request.isOverdueInvoicesAlert());
+        // Notifications & Inventory
+        existing.setLowStockAlert(request.getLowStockAlert());
+        existing.setNewInvoiceAlert(request.getNewInvoiceAlert());
+        existing.setPaymentReceivedAlert(request.getPaymentReceivedAlert());
+        existing.setOverdueInvoicesAlert(request.getOverdueInvoicesAlert());
+        if (request.getGlobalMinStockLevel() != null) {
+            existing.setGlobalMinStockLevel(request.getGlobalMinStockLevel());
+        }
+        if (request.getSkuPrefix() != null) {
+            existing.setSkuPrefix(request.getSkuPrefix());
+        }
+        if (request.getSkuCounter() != null) {
+            existing.setSkuCounter(request.getSkuCounter());
+        }
+        if (request.getPurchaseInvoiceCounter() != null) {
+            existing.setPurchaseInvoiceCounter(request.getPurchaseInvoiceCounter());
+        }
+        if (request.getSalesInvoiceCounter() != null) {
+            existing.setSalesInvoiceCounter(request.getSalesInvoiceCounter());
+        }
 
         return ResponseEntity.ok(businessRepository.save(existing));
     }

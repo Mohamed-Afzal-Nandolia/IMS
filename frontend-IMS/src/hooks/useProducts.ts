@@ -17,8 +17,8 @@ export interface Product {
     gstRate: number;
     cessRate: number;
     currentStock: number;
-    openingStock: number;
     minStockLevel: number;
+    isLowStock: boolean;
     description: string;
     isActive: boolean;
     createdAt: string;
@@ -34,9 +34,8 @@ export interface ProductFormData {
     unit?: string;
     sellingPrice: number;
     purchasePrice: number;
-    gstRate?: number;
-    currentStock?: number;
-    minStockLevel?: number;
+    gstRate: number;
+    minStockLevel: number;
     description?: string;
     isActive?: boolean;
     // category_id is a UI-only helper; mapped to category object below
@@ -69,7 +68,7 @@ export function useProducts(options: UseProductsOptions = {}) {
                 filtered = filtered.filter(p => p.category?.id === category);
             }
             if (stockFilter === 'low_stock') {
-                filtered = filtered.filter(p => (p.currentStock || 0) > 0 && (p.currentStock || 0) < 20);
+                filtered = filtered.filter(p => p.isLowStock);
             } else if (stockFilter === 'in_stock') {
                 filtered = filtered.filter(p => (p.currentStock || 0) > 0);
             } else if (stockFilter === 'out_of_stock') {
@@ -80,8 +79,8 @@ export function useProducts(options: UseProductsOptions = {}) {
             const from = (page - 1) * pageSize;
             const to = from + pageSize;
             const paginated = filtered
-                .slice(from, to)
-                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .slice(from, to);
 
             return { products: paginated, total };
         },

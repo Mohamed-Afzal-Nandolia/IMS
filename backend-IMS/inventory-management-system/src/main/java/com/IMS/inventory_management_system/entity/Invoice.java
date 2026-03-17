@@ -39,30 +39,33 @@ public class Invoice {
     @Column(name = "invoice_number", nullable = false, length = 100)
     private String invoiceNumber;
 
-    @Column(length = 20, columnDefinition = "varchar(20) default 'pending'")
-    private String status = "pending";
-
     @Column(name = "issue_date", nullable = false)
     private LocalDate issueDate;
 
     @Column(name = "due_date")
     private LocalDate dueDate;
 
+    @Builder.Default
     @Column(precision = 15, scale = 2)
     private BigDecimal subtotal = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(name = "total_tax", precision = 15, scale = 2)
     private BigDecimal totalTax = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(name = "cgst_amount", precision = 15, scale = 2)
     private BigDecimal cgstAmount = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(name = "sgst_amount", precision = 15, scale = 2)
     private BigDecimal sgstAmount = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(name = "igst_amount", precision = 15, scale = 2)
     private BigDecimal igstAmount = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(name = "total_amount", precision = 15, scale = 2)
     private BigDecimal totalAmount = BigDecimal.ZERO;
 

@@ -12,6 +12,7 @@ export interface Category {
     createdAt: string;
     updatedAt: string;
     parent?: { id: string; name: string } | null;
+    department?: { id: string; name: string } | null;
 }
 
 // Form data in camelCase to match backend expectations
@@ -20,6 +21,7 @@ export interface CategoryFormData {
     description?: string;
     isActive?: boolean;
     parent?: { id: string } | null;
+    department?: { id: string } | null;
 }
 
 export function useCategories() {

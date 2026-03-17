@@ -69,9 +69,9 @@ export default function ProductsPage() {
   };
 
   // rule: rendering-conditional-render — use ternary, not && for JSX conditionals
-  const stockBadge = (qty: number) => {
-    if (qty === 0) return <span className="px-2 py-0.5 rounded-lg text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400">Out of Stock</span>;
-    if (qty < 20) return <span className="px-2 py-0.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">Low Stock</span>;
+  const stockBadge = (p: Product) => {
+    if ((p.currentStock || 0) <= 0) return <span className="px-2 py-0.5 rounded-lg text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400">Out of Stock</span>;
+    if (p.isLowStock) return <span className="px-2 py-0.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">Low Stock</span>;
     return <span className="px-2 py-0.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400">In Stock</span>;
   };
 
@@ -167,7 +167,7 @@ export default function ProductsPage() {
                     <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white tabnum">{formatCurrency(p.sellingPrice)}</td>
                     <td className="px-5 py-3 text-center text-gray-500 tabnum">{p.gstRate}%</td>
                     <td className="px-5 py-3 text-center font-semibold text-gray-900 dark:text-white tabnum">{p.currentStock || 0}</td>
-                    <td className="px-5 py-3 text-center">{stockBadge(p.currentStock || 0)}</td>
+                    <td className="px-5 py-3 text-center">{stockBadge(p)}</td>
                     <td className="px-5 py-3">
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={() => setViewProduct(p)} aria-label="View product" className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-indigo-600"><LuEye className="w-4 h-4" /></button>
@@ -292,7 +292,6 @@ export default function ProductsPage() {
           {showModal && (
             <ProductFormModal
               product={editingProduct}
-              categories={categories || []}
               isSubmitting={createProduct.isPending || updateProduct.isPending}
               onSubmit={handleSubmit}
               onClose={() => { setShowModal(false); setEditingProduct(null); }}
