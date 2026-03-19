@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils';
 import { LuPlus, LuSearch, LuEye, LuTrash2, LuFileText, LuLoader, LuX, LuBox } from 'react-icons/lu';
@@ -409,19 +409,49 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
 
 function ItemRow({ idx, itm, products, updateItem, removeItem }: any) {
   const [search, setSearch] = useState(itm.productName || '');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
   const { data: depts } = useDepartments();
   const { data: cats } = useCategories();
+
+  const updateCoords = useCallback(() => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showDropdown) {
+      updateCoords();
+      window.addEventListener('scroll', updateCoords, true);
+      window.addEventListener('resize', updateCoords);
+    }
+    return () => {
+      window.removeEventListener('scroll', updateCoords, true);
+      window.removeEventListener('resize', updateCoords);
+    };
+  }, [showDropdown, updateCoords]);
 
   return (
     <tr className="group hover:bg-indigo-50/10 dark:hover:bg-indigo-900/5 transition-colors">
       <td className="px-3 py-2 text-[11px] font-mono text-gray-400 sticky left-0 bg-white dark:bg-gray-900 z-10 border-b border-gray-100 dark:border-gray-800 shadow-[1px_0_0_rgba(0,0,0,0.05)]">{idx + 1}</td>
-      <td className="p-0 w-40 sticky left-10 bg-white dark:bg-gray-900 z-10 border-b border-gray-100 dark:border-gray-800 shadow-[1px_0_0_rgba(0,0,0,0.05)] group-focus-within:z-30 transition-all">
-        <div className="relative group/name w-full h-10 flex items-center">
+      <td className="p-0 w-40 sticky left-10 bg-white dark:bg-gray-900 z-10 border-b border-gray-100 dark:border-gray-800 shadow-[1px_0_0_rgba(0,0,0,0.05)] transition-all">
+        <div ref={containerRef} className="relative w-full h-10 flex items-center">
           <input 
             type="text"
             placeholder="Search product..."
             value={search}
-            onFocus={(e) => e.target.select()}
+            onFocus={(e) => {
+              e.target.select();
+              setShowDropdown(true);
+            }}
+            onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
             onChange={(e) => {
               setSearch(e.target.value);
               updateItem(idx, 'productName', e.target.value);
@@ -430,25 +460,46 @@ function ItemRow({ idx, itm, products, updateItem, removeItem }: any) {
           />
           {itm.isNew && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[8px] font-bold text-emerald-500 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-100">NEW</span>}
           
-          <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl z-30 max-h-48 overflow-y-auto hidden group-focus-within/name:block no-scrollbar">
-            {products.filter((p: any) => !search || p.name.toLowerCase().includes(search.toLowerCase())).map((p: any) => (
-              <button 
-                key={p.id} 
-                onMouseDown={() => { 
-                  setSearch(p.name); 
-                  updateItem(idx, 'productId', p.id); 
-                  (document.activeElement as HTMLElement)?.blur();
-                }} 
-                className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 text-[11px] transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 outline-none"
-              >
-                <div className="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{p.name}</div>
-                <div className="flex justify-between items-center mt-0.5">
-                  <span className="text-[9px] text-gray-400 font-mono">SKU: {p.sku || 'N/A'}</span>
-                  <span className="text-[10px] font-bold text-indigo-600">{formatCurrency(p.purchasePrice)}</span>
-                </div>
-              </button>
-            ))}
-          </div>
+          <AnimatePresence>
+            {showDropdown && (
+              <Portal>
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="fixed bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl z-[9999] max-h-48 overflow-y-auto no-scrollbar"
+                  style={{ 
+                    top: coords.top + 4 - window.scrollY, 
+                    left: coords.left - window.scrollX, 
+                    width: coords.width 
+                  }}
+                >
+                  {products.filter((p: any) => !search || p.name.toLowerCase().includes(search.toLowerCase())).map((p: any) => (
+                    <button 
+                      key={p.id} 
+                      onMouseDown={(e) => { 
+                        e.preventDefault();
+                        setSearch(p.name); 
+                        updateItem(idx, 'productId', p.id); 
+                        setShowDropdown(false);
+                      }} 
+                      className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 text-[11px] transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 outline-none"
+                    >
+                      <div className="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{p.name}</div>
+                      <div className="flex justify-between items-center mt-0.5">
+                        <span className="text-[9px] text-gray-400 font-mono">SKU: {p.sku || 'N/A'}</span>
+                        <span className="text-[10px] font-bold text-indigo-600">{formatCurrency(p.purchasePrice)}</span>
+                      </div>
+                    </button>
+                  ))}
+                  {products.filter((p: any) => !search || p.name.toLowerCase().includes(search.toLowerCase())).length === 0 && (
+                    <div className="px-3 py-4 text-center text-xs text-gray-400">No products found</div>
+                  )
+                  }
+                </motion.div>
+              </Portal>
+            )}
+          </AnimatePresence>
         </div>
       </td>
       <td className="px-2 py-2"><input type="text" value={itm.unit} onChange={e => updateItem(idx, 'unit', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-600 dark:text-gray-400 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8" /></td>
