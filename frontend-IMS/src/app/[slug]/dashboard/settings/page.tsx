@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, Reorder } from 'framer-motion';
 import { LuSettings, LuBuilding2, LuUser, LuBell, LuShield, LuLoader, LuSave, LuPlus, LuX, LuTrash2 as LuTrashIcon, LuPlus as LuPlusIcon } from 'react-icons/lu';
 import { useQueryClient } from '@tanstack/react-query';
@@ -217,7 +217,7 @@ function ProductTemplatesSection() {
     if (!newTemplateName) return;
     try {
       await createTemplate.mutateAsync({ 
-        name: newTemplateName, 
+        label: newTemplateName, 
         templateType: newTemplateName.toUpperCase().replace(/\s+/g, '_'),
         values: [] 
       });
@@ -280,21 +280,32 @@ function TemplateCard({ template, onDelete }: { template: any, onDelete: () => v
   const [localValues, setLocalValues] = useState(template.values || []);
   const updateTemplate = useUpdateProductTemplate();
   const { addToast } = useToast();
+  const isDirty = useRef(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newValue, setNewValue] = useState('');
 
   useEffect(() => {
-    setLocalValues(template.values || []);
+    if (JSON.stringify(template.values) !== JSON.stringify(localValues)) {
+      isDirty.current = false;
+      setLocalValues(template.values || []);
+    }
   }, [template.values]);
 
   const handleAddValue = async () => {
-    const val = prompt('Enter new value (e.g. Red, XL, Cotton):');
-    if (!val) return;
+    if (!newValue.trim()) {
+      setIsAdding(false);
+      return;
+    }
     
     const maxSortOrder = localValues.reduce((max: number, v: any) => Math.max(max, v.sortOrder || 0), -1);
-    const newValue = { id: `temp-${Date.now()}`, value: val, sortOrder: maxSortOrder + 1 };
+    const newVal = { id: `temp-${Date.now()}`, value: newValue.trim(), sortOrder: maxSortOrder + 1 };
     
     try {
-      await updateTemplate.mutateAsync({ id: template.id, values: [...localValues, newValue] as any });
+      isDirty.current = false; // Add/Remove are direct mutations, don't trigger reorder effect
+      await updateTemplate.mutateAsync({ id: template.id, values: [...localValues, newVal] as any });
       addToast({ type: 'success', title: 'Value Added' });
+      setNewValue('');
+      setIsAdding(false);
     } catch (err: any) {
       addToast({ type: 'error', title: 'Error', message: err.message });
     }
@@ -303,6 +314,7 @@ function TemplateCard({ template, onDelete }: { template: any, onDelete: () => v
   const handleRemoveValue = async (valueId: string) => {
     const updatedValues = localValues.filter((v: any) => v.id !== valueId);
     try {
+      isDirty.current = false;
       await updateTemplate.mutateAsync({ id: template.id, values: updatedValues as any });
       addToast({ type: 'success', title: 'Value Removed' });
     } catch (err: any) {
@@ -311,10 +323,13 @@ function TemplateCard({ template, onDelete }: { template: any, onDelete: () => v
   };
 
   const handleReorder = (newValues: any[]) => {
+    isDirty.current = true;
     setLocalValues(newValues);
   };
 
+  // Debounced API sync for reordering
   useEffect(() => {
+    if (!isDirty.current) return;
     if (JSON.stringify(localValues) === JSON.stringify(template.values)) return;
 
     const timer = setTimeout(async () => {
@@ -342,7 +357,7 @@ function TemplateCard({ template, onDelete }: { template: any, onDelete: () => v
     >
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-bold text-gray-900 dark:text-white capitalize text-base">{template.name}</h3>
+          <h3 className="font-bold text-gray-900 dark:text-white capitalize text-base">{template.label}</h3>
           <p className="text-[10px] text-gray-400 font-mono tracking-wider">TYPE: {template.templateType}</p>
         </div>
         {!template.isSystem && (
@@ -369,9 +384,32 @@ function TemplateCard({ template, onDelete }: { template: any, onDelete: () => v
             </button>
           </Reorder.Item>
         ))}
-        <button onClick={handleAddValue} className="px-3 py-1.5 rounded-xl border border-dashed border-indigo-200 dark:border-indigo-900/50 text-xs text-indigo-600 font-bold hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">
-          + Add Value
-        </button>
+        {isAdding ? (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 shadow-inner">
+            <input 
+              autoFocus
+              value={newValue}
+              onChange={e => setNewValue(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleAddValue();
+                if (e.key === 'Escape') setIsAdding(false);
+              }}
+              onBlur={() => { if (!newValue) setIsAdding(false); }}
+              placeholder="e.g. XL"
+              className="bg-transparent border-none outline-none text-xs font-medium text-indigo-700 dark:text-indigo-300 w-16"
+            />
+            <button onClick={handleAddValue} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 transition-colors">
+              <LuPlus className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => setIsAdding(false)} className="text-gray-400 hover:text-red-500 transition-colors">
+              <LuX className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : (
+          <button onClick={() => setIsAdding(true)} className="px-3 py-1.5 rounded-xl border border-dashed border-indigo-200 dark:border-indigo-900/50 text-xs text-indigo-600 font-bold hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">
+            + Add Value
+          </button>
+        )}
       </Reorder.Group>
     </motion.div>
   );

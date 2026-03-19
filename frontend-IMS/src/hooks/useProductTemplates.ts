@@ -11,7 +11,7 @@ export interface ProductTemplateValue {
 
 export interface ProductTemplate {
     id: string;
-    name: string;
+    label: string;
     templateType: string;
     isSystem: boolean;
     sortOrder: number;
