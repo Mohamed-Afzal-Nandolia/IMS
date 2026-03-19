@@ -186,7 +186,7 @@ function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClo
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<InvoiceItem[]>([]);
 
-  const addItem = () => setItems([...items, { productId: '', quantity: 1, unitPrice: 0, taxRate: 18, taxAmount: 0, totalPrice: 0 }]);
+  const addItem = () => setItems([...items, { productId: '', quantity: 1, unitPrice: 0, taxRate: 0, taxAmount: 0, totalPrice: 0 }]);
 
   const updateItem = (index: number, field: string, value: any) => {
     const updated = [...items];

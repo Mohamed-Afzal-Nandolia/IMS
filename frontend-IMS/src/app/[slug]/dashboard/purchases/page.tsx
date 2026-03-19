@@ -163,7 +163,7 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
     productId: '', 
     quantity: 1, 
     unitPrice: 0, 
-    taxRate: 18, 
+    taxRate: 0, 
     taxAmount: 0, 
     totalPrice: 0,
     unit: 'pcs',
@@ -232,9 +232,9 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
             hsnCode: itm.hsnCode,
             purchasePrice: itm.unitPrice,
             sellingPrice: itm.sellingPrice || 0,
-            gstRate: itm.taxRate,
-            minStockLevel: itm.minStock,
-            category_id: itm.subCatId || itm.catId || itm.deptId
+            gstRate: itm.taxRate ?? 0,
+            minStockLevel: itm.minStock ?? 0,
+            category_id: itm.subCatId || itm.catId || itm.deptId || null
           });
           return { ...itm, productId: newProd.id };
         }

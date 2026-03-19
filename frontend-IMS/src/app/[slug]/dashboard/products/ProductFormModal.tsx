@@ -36,7 +36,7 @@ export default function ProductFormModal({
     unit: product?.unit || 'pcs',
     sellingPrice: product?.sellingPrice || 0,
     purchasePrice: product?.purchasePrice || 0,
-    gstRate: product?.gstRate || 18,
+    gstRate: product?.gstRate || 0,
     minStockLevel: product?.minStockLevel ?? (businessData?.globalMinStockLevel || 10),
     description: product?.description || '',
     isActive: product?.isActive ?? true,
