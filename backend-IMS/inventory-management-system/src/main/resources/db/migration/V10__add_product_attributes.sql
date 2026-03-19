@@ -60,3 +60,19 @@ INSERT INTO master_product_template_values (id, template_id, value, sort_order) 
 (UUID(), 'm-mt-1', 'Wool', 4),
 (UUID(), 'm-mt-1', 'Leather', 5),
 (UUID(), 'm-mt-1', 'Denim', 6);
+
+-- Add Unit to Master Template Registry
+INSERT INTO master_product_templates (id, template_type, label, sort_order) VALUES
+('m-un-1', 'UNIT', 'Unit', 4);
+
+-- Seed Master Values for Unit
+INSERT INTO master_product_template_values (id, template_id, value, sort_order) VALUES
+(UUID(), 'm-un-1', 'pcs', 1),
+(UUID(), 'm-un-1', 'kg', 2),
+(UUID(), 'm-un-1', 'g', 3),
+(UUID(), 'm-un-1', 'm', 4),
+(UUID(), 'm-un-1', 'l', 5),
+(UUID(), 'm-un-1', 'ml', 6),
+(UUID(), 'm-un-1', 'box', 7),
+(UUID(), 'm-un-1', 'pack', 8),
+(UUID(), 'm-un-1', 'ton', 9);

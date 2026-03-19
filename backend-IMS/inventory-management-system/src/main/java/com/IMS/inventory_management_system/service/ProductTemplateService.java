@@ -24,17 +24,63 @@ public class ProductTemplateService {
     private final ProductTemplateValueRepository productTemplateValueRepository;
     private final MasterProductTemplateRepository masterProductTemplateRepository;
 
+    @Transactional
     public List<ProductTemplate> getAllTemplates() {
         String businessId = SecurityUtils.getCurrentBusinessId();
         List<ProductTemplate> templates = productTemplateRepository.findByBusinessIdOrderBySortOrderAsc(businessId);
         
+        Business business = SecurityUtils.getCurrentUser().getBusiness();
+        List<MasterProductTemplate> masters = masterProductTemplateRepository.findAllByOrderBySortOrderAsc();
+
         if (templates.isEmpty()) {
-            Business business = SecurityUtils.getCurrentUser().getBusiness();
             seedDefaultTemplates(business);
+            return productTemplateRepository.findByBusinessIdOrderBySortOrderAsc(businessId);
+        }
+
+        // Differential sync: identify masters that don't exist in the business's templates
+        boolean needsSync = false;
+        for (MasterProductTemplate master : masters) {
+            boolean exists = templates.stream()
+                    .anyMatch(t -> t.getTemplateType().equals(master.getTemplateType()));
+            
+            if (!exists) {
+                System.out.println("DEBUG: Seeding missing master template: " + master.getTemplateType());
+                seedSingleTemplate(business, master);
+                needsSync = true;
+            }
+        }
+
+        if (needsSync) {
             return productTemplateRepository.findByBusinessIdOrderBySortOrderAsc(businessId);
         }
         
         return templates;
+    }
+
+    @Transactional
+    public void seedSingleTemplate(Business business, MasterProductTemplate master) {
+        ProductTemplate template = ProductTemplate.builder()
+                .id(UUID.randomUUID().toString())
+                .business(business)
+                .templateType(master.getTemplateType())
+                .label(master.getLabel())
+                .isSystem(true)
+                .sortOrder(master.getSortOrder())
+                .build();
+                
+        ProductTemplate savedTemplate = productTemplateRepository.save(template);
+
+        if (master.getValues() != null) {
+            for (MasterProductTemplateValue masterValue : master.getValues()) {
+                ProductTemplateValue value = ProductTemplateValue.builder()
+                        .id(UUID.randomUUID().toString())
+                        .template(savedTemplate)
+                        .value(masterValue.getValue())
+                        .sortOrder(masterValue.getSortOrder())
+                        .build();
+                productTemplateValueRepository.save(value);
+            }
+        }
     }
 
     @Transactional
