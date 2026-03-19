@@ -31,6 +31,11 @@ public class ProductTemplateController {
         return ResponseEntity.ok(productTemplateService.addTemplateValue(templateId, value));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductTemplate> updateTemplate(@PathVariable String id, @RequestBody ProductTemplate template) {
+        return ResponseEntity.ok(productTemplateService.updateTemplate(id, template));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTemplate(@PathVariable String id) {
         productTemplateService.deleteTemplate(id);

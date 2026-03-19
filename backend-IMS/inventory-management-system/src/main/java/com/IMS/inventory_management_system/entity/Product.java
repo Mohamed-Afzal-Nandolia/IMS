@@ -77,6 +77,19 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(length = 50)
+    private String size;
+
+    @Column(length = 50)
+    private String color;
+
+    @Column(length = 100)
+    private String brand;
+
+    @Builder.Default
+    @Column(name = "discount_rate", precision = 5, scale = 2)
+    private BigDecimal discountRate = BigDecimal.ZERO;
+
     @Builder.Default
     @Column(name = "is_active", columnDefinition = "boolean default true")
     private Boolean isActive = true;

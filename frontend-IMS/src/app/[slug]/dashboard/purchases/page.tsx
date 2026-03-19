@@ -152,6 +152,9 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
     catId?: string; 
     subCatId?: string; 
     minStock?: number;
+    size?: string;
+    color?: string;
+    brand?: string;
   })[]>([]);
   
   const [showProductModal, setShowProductModal] = useState(false);
@@ -169,7 +172,10 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
     unit: 'pcs',
     hsnCode: '',
     sellingPrice: 0,
-    minStock: businessData?.globalMinStockLevel || 10
+    minStock: businessData?.globalMinStockLevel || 10,
+    size: '',
+    color: '',
+    brand: ''
   }]);
 
   const updateItem = (index: number, field: string, value: any) => {
@@ -188,7 +194,10 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
         updated[index].unit = product.unit || 'pcs';
         updated[index].hsnCode = product.hsnCode || '';
         updated[index].minStock = product.minStockLevel || 0;
-        updated[index].deptId = product.category?.id; // Assuming top level for simplicity or map hierarchy
+        updated[index].size = product.size || '';
+        updated[index].color = product.color || '';
+        updated[index].brand = product.brand || '';
+        updated[index].deptId = product.category?.id;
       } else if (field === 'productName') {
         updated[index].isNew = true;
         updated[index].productId = '';
@@ -234,6 +243,9 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
             sellingPrice: itm.sellingPrice || 0,
             gstRate: itm.taxRate ?? 0,
             minStockLevel: itm.minStock ?? 0,
+            size: itm.size || '',
+            color: itm.color || '',
+            brand: itm.brand || '',
             category_id: itm.subCatId || itm.catId || itm.deptId || null
           });
           return { ...itm, productId: newProd.id };
@@ -487,7 +499,9 @@ function ItemRow({ idx, itm, products, updateItem, removeItem }: any) {
                     >
                       <div className="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{p.name}</div>
                       <div className="flex justify-between items-center mt-0.5">
-                        <span className="text-[9px] text-gray-400 font-mono">SKU: {p.sku || 'N/A'}</span>
+                        <span className="text-[9px] text-gray-400 font-mono">
+                          {p.sku || 'N/A'} • {p.size || '-'} / {p.color || '-'} / {p.brand || '-'}
+                        </span>
                         <span className="text-[10px] font-bold text-indigo-600">{formatCurrency(p.purchasePrice)}</span>
                       </div>
                     </button>

@@ -90,6 +90,10 @@ public class ProductService {
         existing.setCessRate(updatedProduct.getCessRate());
         existing.setMinStockLevel(updatedProduct.getMinStockLevel());
         existing.setDescription(updatedProduct.getDescription());
+        existing.setSize(updatedProduct.getSize());
+        existing.setColor(updatedProduct.getColor());
+        existing.setBrand(updatedProduct.getBrand());
+        existing.setDiscountRate(updatedProduct.getDiscountRate());
 
         if (updatedProduct.getIsActive() != null) {
             existing.setIsActive(updatedProduct.getIsActive());

@@ -21,6 +21,10 @@ export interface Product {
     isLowStock: boolean;
     description: string;
     isActive: boolean;
+    size?: string;
+    color?: string;
+    brand?: string;
+    discountRate?: number;
     createdAt: string;
     updatedAt: string;
     category?: { id: string; name: string } | null;
@@ -38,6 +42,10 @@ export interface ProductFormData {
     minStockLevel: number;
     description?: string;
     isActive?: boolean;
+    size?: string;
+    color?: string;
+    brand?: string;
+    discountRate?: number;
     // category_id is a UI-only helper; mapped to category object below
     category_id?: string | null;
     category?: { id: string } | null;

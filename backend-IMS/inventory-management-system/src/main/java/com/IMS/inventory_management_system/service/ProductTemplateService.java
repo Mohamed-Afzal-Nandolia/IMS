@@ -1,8 +1,11 @@
 package com.IMS.inventory_management_system.service;
 
 import com.IMS.inventory_management_system.entity.Business;
+import com.IMS.inventory_management_system.entity.MasterProductTemplate;
+import com.IMS.inventory_management_system.entity.MasterProductTemplateValue;
 import com.IMS.inventory_management_system.entity.ProductTemplate;
 import com.IMS.inventory_management_system.entity.ProductTemplateValue;
+import com.IMS.inventory_management_system.repository.MasterProductTemplateRepository;
 import com.IMS.inventory_management_system.repository.ProductTemplateRepository;
 import com.IMS.inventory_management_system.repository.ProductTemplateValueRepository;
 import com.IMS.inventory_management_system.util.SecurityUtils;
@@ -10,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,9 +22,19 @@ public class ProductTemplateService {
 
     private final ProductTemplateRepository productTemplateRepository;
     private final ProductTemplateValueRepository productTemplateValueRepository;
+    private final MasterProductTemplateRepository masterProductTemplateRepository;
 
     public List<ProductTemplate> getAllTemplates() {
-        return productTemplateRepository.findByBusinessIdOrderBySortOrderAsc(SecurityUtils.getCurrentBusinessId());
+        String businessId = SecurityUtils.getCurrentBusinessId();
+        List<ProductTemplate> templates = productTemplateRepository.findByBusinessIdOrderBySortOrderAsc(businessId);
+        
+        if (templates.isEmpty()) {
+            Business business = SecurityUtils.getCurrentUser().getBusiness();
+            seedDefaultTemplates(business);
+            return productTemplateRepository.findByBusinessIdOrderBySortOrderAsc(businessId);
+        }
+        
+        return templates;
     }
 
     @Transactional
@@ -59,6 +71,32 @@ public class ProductTemplateService {
     }
 
     @Transactional
+    public ProductTemplate updateTemplate(String id, ProductTemplate templateDetails) {
+        ProductTemplate template = productTemplateRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Template not found"));
+
+        if (!template.getBusiness().getId().equals(SecurityUtils.getCurrentBusinessId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        template.setLabel(templateDetails.getLabel() != null ? templateDetails.getLabel() : template.getLabel());
+        template.setTemplateType(templateDetails.getTemplateType() != null ? templateDetails.getTemplateType() : template.getTemplateType());
+        template.setSortOrder(templateDetails.getSortOrder() != null ? templateDetails.getSortOrder() : template.getSortOrder());
+
+        if (templateDetails.getValues() != null) {
+            // Update values list - CascadeType.ALL + orphanRemoval = true handles this
+            template.getValues().clear();
+            for (ProductTemplateValue val : templateDetails.getValues()) {
+                val.setId(val.getId() == null ? UUID.randomUUID().toString() : val.getId());
+                val.setTemplate(template);
+                template.getValues().add(val);
+            }
+        }
+
+        return productTemplateRepository.save(template);
+    }
+
+    @Transactional
     public void deleteTemplate(String id) {
         ProductTemplate template = productTemplateRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Template not found"));
@@ -91,35 +129,31 @@ public class ProductTemplateService {
      */
     @Transactional
     public void seedDefaultTemplates(Business business) {
-        createDefaultTemplate(business, "SIZE", "Size", 1, Arrays.asList("XS", "S", "M", "L", "XL", "XXL", "XXXL"));
-        createDefaultTemplate(business, "COLOR", "Color", 2, Arrays.asList("Red", "Blue", "Green", "Yellow", "Black", "White", "Grey", "Pink", "Orange", "Purple"));
-        createDefaultTemplate(business, "MATERIAL", "Material", 3, Arrays.asList("Cotton", "Polyester", "Silk", "Wool", "Leather", "Denim"));
-        createDefaultTemplate(business, "PACK_TYPE", "Pack Type", 4, Arrays.asList("Single", "Pack of 6", "Pack of 12", "Box of 24"));
-        createDefaultTemplate(business, "WEIGHT_CLASS", "Weight Class", 5, Arrays.asList("0-500g", "500g-1kg", "1kg-5kg", "5kg+"));
-        createDefaultTemplate(business, "UNIT_TYPE", "Unit Type", 6, Arrays.asList("Piece", "Pair", "Set", "Bundle"));
-    }
-
-    private void createDefaultTemplate(Business business, String type, String label, int sortOrder, List<String> values) {
-        ProductTemplate template = ProductTemplate.builder()
-                .id(UUID.randomUUID().toString())
-                .business(business)
-                .templateType(type)
-                .label(label)
-                .isSystem(true)
-                .sortOrder(sortOrder)
-                .build();
-                
-        ProductTemplate savedTemplate = productTemplateRepository.save(template);
-
-        int idx = 1;
-        for (String val : values) {
-            ProductTemplateValue value = ProductTemplateValue.builder()
+        List<MasterProductTemplate> masters = masterProductTemplateRepository.findAllByOrderBySortOrderAsc();
+        
+        for (MasterProductTemplate master : masters) {
+            ProductTemplate template = ProductTemplate.builder()
                     .id(UUID.randomUUID().toString())
-                    .template(savedTemplate)
-                    .value(val)
-                    .sortOrder(idx++)
+                    .business(business)
+                    .templateType(master.getTemplateType())
+                    .label(master.getLabel())
+                    .isSystem(true)
+                    .sortOrder(master.getSortOrder())
                     .build();
-            productTemplateValueRepository.save(value);
+                    
+            ProductTemplate savedTemplate = productTemplateRepository.save(template);
+
+            if (master.getValues() != null) {
+                for (MasterProductTemplateValue masterValue : master.getValues()) {
+                    ProductTemplateValue value = ProductTemplateValue.builder()
+                            .id(UUID.randomUUID().toString())
+                            .template(savedTemplate)
+                            .value(masterValue.getValue())
+                            .sortOrder(masterValue.getSortOrder())
+                            .build();
+                    productTemplateValueRepository.save(value);
+                }
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { useCategories } from '@/hooks/useCategories';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useBusiness } from '@/hooks/useBusiness';
+import { useProductTemplates } from '@/hooks/useProductTemplates';
 
 interface ProductFormModalProps {
   product: Product | null;
@@ -25,6 +26,7 @@ export default function ProductFormModal({
   const { data: allCategories } = useCategories();
   const { data: allDepartments } = useDepartments();
   const { data: businessData } = useBusiness();
+  const { data: templates } = useProductTemplates();
 
   const [selectedDept, setSelectedDept] = useState('');
   const [selectedCat, setSelectedCat] = useState('');
@@ -38,6 +40,10 @@ export default function ProductFormModal({
     purchasePrice: product?.purchasePrice || 0,
     gstRate: product?.gstRate || 0,
     minStockLevel: product?.minStockLevel ?? (businessData?.globalMinStockLevel || 10),
+    size: product?.size || '',
+    color: product?.color || '',
+    brand: product?.brand || '',
+    discountRate: product?.discountRate || 0,
     description: product?.description || '',
     isActive: product?.isActive ?? true,
   });
@@ -125,6 +131,58 @@ export default function ProductFormModal({
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 focus-visible:ring-1 focus-visible:ring-indigo-500/20 transition-all text-gray-900 dark:text-white"
               />
             </div>
+
+            {/* Size, Color, Brand Row */}
+            <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Size</label>
+                <div className="relative group/size">
+                  <input
+                    value={form.size}
+                    onChange={(e) => update('size', e.target.value)}
+                    placeholder="e.g. XL, 42"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-indigo-500 transition-all"
+                  />
+                  <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl z-10 hidden group-focus-within/size:block max-h-40 overflow-y-auto no-scrollbar">
+                    {templates?.find(t => t.templateType === 'SIZE' || t.name.toUpperCase() === 'SIZE')?.values.map(v => (
+                      <button key={v.id} type="button" onMouseDown={() => update('size', v.value)} className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs">{v.value}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
+                <div className="relative group/color">
+                  <input
+                    value={form.color}
+                    onChange={(e) => update('color', e.target.value)}
+                    placeholder="e.g. Black"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-indigo-500 transition-all"
+                  />
+                  <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl z-10 hidden group-focus-within/color:block max-h-40 overflow-y-auto no-scrollbar">
+                    {templates?.find(t => t.templateType === 'COLOR' || t.name.toUpperCase() === 'COLOR')?.values.map(v => (
+                      <button key={v.id} type="button" onMouseDown={() => update('color', v.value)} className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs">{v.value}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Brand</label>
+                <div className="relative group/brand">
+                  <input
+                    value={form.brand}
+                    onChange={(e) => update('brand', e.target.value)}
+                    placeholder="e.g. Nike"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-indigo-500 transition-all"
+                  />
+                  <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl z-10 hidden group-focus-within/brand:block max-h-40 overflow-y-auto no-scrollbar">
+                    {templates?.find(t => t.templateType === 'BRAND' || t.name.toUpperCase() === 'BRAND')?.values.map(v => (
+                      <button key={v.id} type="button" onMouseDown={() => update('brand', v.value)} className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs">{v.value}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
@@ -164,6 +222,23 @@ export default function ProductFormModal({
                   <option key={r} value={r}>{r}%</option>
                 ))}
               </select>
+            </div>
+
+            {/* Discount Rate */}
+            <div>
+              <label htmlFor="prod-discount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Default Discount (%)
+              </label>
+              <input
+                id="prod-discount"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={form.discountRate || ''}
+                onChange={(e) => update('discountRate', Number(e.target.value))}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus-visible:border-indigo-500 transition-all text-gray-900 dark:text-white"
+              />
             </div>
 
             {/* Purchase Price */}

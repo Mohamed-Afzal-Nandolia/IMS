@@ -6,11 +6,15 @@ import api from '@/lib/api';
 export interface ProductTemplateValue {
     id: string;
     value: string;
+    sortOrder: number;
 }
 
 export interface ProductTemplate {
     id: string;
     name: string;
+    templateType: string;
+    isSystem: boolean;
+    sortOrder: number;
     values: ProductTemplateValue[];
 }
 

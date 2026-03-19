@@ -198,6 +198,9 @@ function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClo
         updated[index].unitPrice = product.sellingPrice || 0;
         updated[index].taxRate = product.gstRate || 0;
         updated[index].productName = product.name;
+        (updated[index] as any).size = product.size || '';
+        (updated[index] as any).color = product.color || '';
+        (updated[index] as any).brand = product.brand || '';
       }
     }
 
@@ -275,8 +278,12 @@ function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClo
                   <div className="col-span-4">
                     <label className="text-xs text-gray-500">Product</label>
                     <select value={itm.productId} onChange={(e) => updateItem(idx, 'productId', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none">
-                      <option value="">Select</option>
-                      {(productsData?.products || []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      <option value="">Select Product...</option>
+                      {(productsData?.products || []).map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} {p.size || p.color || p.brand ? `(${p.size || '-'}/${p.color || '-'}/${p.brand || '-'})` : ''}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="col-span-1"><label className="text-xs text-gray-500">Qty</label><input type="number" min="1" value={itm.quantity} onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))} className="w-full px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm tabnum" /></div>
