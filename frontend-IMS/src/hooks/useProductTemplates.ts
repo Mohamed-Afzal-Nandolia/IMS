@@ -65,3 +65,16 @@ export function useDeleteProductTemplate() {
         },
     });
 }
+
+export function useCreateProductTemplateValue() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ templateId, ...value }: Partial<ProductTemplateValue> & { templateId: string }) => {
+            const { data } = await api.post<ProductTemplateValue>(`/product-templates/${templateId}/values`, value);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['product-templates'] });
+        },
+    });
+}

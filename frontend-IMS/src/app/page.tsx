@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 import { motion } from 'framer-motion';
 import { SignedIn, SignedOut } from '@/components/auth/AuthComponents';
 import { useAuth } from '@/contexts/AuthContext';

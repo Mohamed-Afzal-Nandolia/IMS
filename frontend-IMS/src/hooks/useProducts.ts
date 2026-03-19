@@ -24,6 +24,8 @@ export interface Product {
     size?: string;
     color?: string;
     brand?: string;
+    material?: string;
+    attributes?: string;
     discountRate?: number;
     createdAt: string;
     updatedAt: string;
@@ -45,6 +47,8 @@ export interface ProductFormData {
     size?: string;
     color?: string;
     brand?: string;
+    material?: string;
+    attributes?: string;
     discountRate?: number;
     // category_id is a UI-only helper; mapped to category object below
     category_id?: string | null;

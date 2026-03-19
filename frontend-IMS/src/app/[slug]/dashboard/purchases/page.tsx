@@ -10,6 +10,7 @@ import { useProducts, useCreateProduct } from '@/hooks/useProducts';
 import { useBusiness } from '@/hooks/useBusiness';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useCategories } from '@/hooks/useCategories';
+import { useProductTemplates, useCreateProductTemplateValue } from '@/hooks/useProductTemplates';
 import { useToast } from '@/components/ui/Toast';
 import dynamic from 'next/dynamic';
 
@@ -140,6 +141,9 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
   const [partySearch, setPartySearch] = useState('');
   const [isNewParty, setIsNewParty] = useState(false);
   
+  const { data: templates = [] } = useProductTemplates();
+  const sortedTemplates = [...templates].sort((a, b) => a.sortOrder - b.sortOrder);
+  
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
@@ -155,6 +159,8 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
     size?: string;
     color?: string;
     brand?: string;
+    material?: string;
+    attributes?: Record<string, string>;
   })[]>([]);
   
   const [showProductModal, setShowProductModal] = useState(false);
@@ -169,13 +175,15 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
     taxRate: 0, 
     taxAmount: 0, 
     totalPrice: 0,
-    unit: 'pcs',
+    unit: '',
     hsnCode: '',
     sellingPrice: 0,
     minStock: businessData?.globalMinStockLevel || 10,
     size: '',
     color: '',
-    brand: ''
+    brand: '',
+    material: '',
+    attributes: {}
   }]);
 
   const updateItem = (index: number, field: string, value: any) => {
@@ -197,6 +205,8 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
         updated[index].size = product.size || '';
         updated[index].color = product.color || '';
         updated[index].brand = product.brand || '';
+        updated[index].material = product.material || '';
+        updated[index].attributes = product.attributes ? JSON.parse(product.attributes) : {};
         updated[index].deptId = product.category?.id;
       } else if (field === 'productName') {
         updated[index].isNew = true;
@@ -246,6 +256,8 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
             size: itm.size || '',
             color: itm.color || '',
             brand: itm.brand || '',
+            material: itm.material || '',
+            attributes: JSON.stringify(itm.attributes || {}),
             category_id: itm.subCatId || itm.catId || itm.deptId || null
           });
           return { ...itm, productId: newProd.id };
@@ -265,7 +277,10 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
         igstAmount: 0, 
         totalAmount: grandTotal,
         notes, 
-        items: finalItems,
+        items: finalItems.map(itm => ({
+          ...itm,
+          attributes: JSON.stringify(itm.attributes || {})
+        })),
       });
 
       addToast({ type: 'success', title: 'Purchase Recorded' });
@@ -357,7 +372,9 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
                   <tr className="text-left text-[9px] uppercase tracking-widest text-gray-400 font-bold bg-white dark:bg-gray-900 sticky top-0 z-10 transition-colors border-b border-gray-100 dark:border-gray-800">
                     <th className="px-3 py-3 w-10 sticky left-0 bg-white dark:bg-gray-900 z-20 border-b border-gray-100 dark:border-gray-800 shadow-[1px_0_0_rgba(0,0,0,0.05)]">#</th>
                     <th className="px-3 py-3 w-40 sticky left-10 bg-white dark:bg-gray-900 z-20 border-b border-gray-100 dark:border-gray-800 shadow-[1px_0_0_rgba(0,0,0,0.05)]">Product / Item *</th>
-                    <th className="px-2 py-3 w-20 border-b border-gray-100 dark:border-gray-800">Unit</th>
+                    {sortedTemplates.map(t => (
+                      <th key={t.id} className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">{t.label}</th>
+                    ))}
                     <th className="px-2 py-3 w-24 border-b border-gray-100 dark:border-gray-800 text-center">Qty</th>
                     <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">Cost Price</th>
                     <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">Sell Price</th>
@@ -371,7 +388,15 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
                   {items.map((itm, idx) => (
-                    <ItemRow key={idx} idx={idx} itm={itm} products={productsData?.products || []} updateItem={updateItem} removeItem={removeItem} />
+                    <ItemRow 
+                      key={idx} 
+                      idx={idx} 
+                      itm={itm} 
+                      products={productsData?.products || []} 
+                      templates={sortedTemplates}
+                      updateItem={updateItem} 
+                      removeItem={removeItem} 
+                    />
                   ))}
                 </tbody>
               </table>
@@ -419,7 +444,7 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
   );
 }
 
-function ItemRow({ idx, itm, products, updateItem, removeItem }: any) {
+function ItemRow({ idx, itm, products, templates, updateItem, removeItem }: any) {
   const [search, setSearch] = useState(itm.productName || '');
   const [showDropdown, setShowDropdown] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
@@ -516,7 +541,33 @@ function ItemRow({ idx, itm, products, updateItem, removeItem }: any) {
           </AnimatePresence>
         </div>
       </td>
-      <td className="px-2 py-2"><input type="text" value={itm.unit} onChange={e => updateItem(idx, 'unit', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-600 dark:text-gray-400 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8" /></td>
+      {templates.map((t: any) => (
+        <td key={t.id} className="px-2 py-2">
+          <AttributeCell 
+            template={t} 
+            value={
+              t.templateType === 'SIZE' ? itm.size :
+              t.templateType === 'COLOR' ? itm.color :
+              t.templateType === 'BRAND' ? itm.brand :
+              t.templateType === 'MATERIAL' ? itm.material :
+              t.templateType === 'UNIT' ? itm.unit :
+              itm.attributes?.[t.templateType] || ''
+            }
+            onChange={(val: string) => {
+              if (t.templateType === 'SIZE') updateItem(idx, 'size', val);
+              else if (t.templateType === 'COLOR') updateItem(idx, 'color', val);
+              else if (t.templateType === 'BRAND') updateItem(idx, 'brand', val);
+              else if (t.templateType === 'MATERIAL') updateItem(idx, 'material', val);
+              else if (t.templateType === 'UNIT') updateItem(idx, 'unit', val);
+              else {
+                const attrs = { ...(itm.attributes || {}) };
+                attrs[t.templateType] = val;
+                updateItem(idx, 'attributes', attrs);
+              }
+            }}
+          />
+        </td>
+      ))}
       <td className="px-2 py-2"><input type="number" value={itm.quantity} onChange={e => updateItem(idx, 'quantity', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] font-bold text-center focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum" /></td>
       <td className="px-2 py-2"><input type="number" value={itm.unitPrice} onChange={e => updateItem(idx, 'unitPrice', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] font-mono focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum" /></td>
       <td className="px-2 py-2"><input type="number" value={itm.sellingPrice} onChange={e => updateItem(idx, 'sellingPrice', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] font-mono text-emerald-600 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum" /></td>
@@ -543,6 +594,110 @@ function ItemRow({ idx, itm, products, updateItem, removeItem }: any) {
         </button>
       </td>
     </tr>
+  );
+}
+
+function AttributeCell({ template, value, onChange }: { template: any; value: string; onChange: (v: string) => void }) {
+  const [val, setVal] = useState(value || '');
+  const [show, setShow] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const createValue = useCreateProductTemplateValue();
+
+  useEffect(() => { setVal(value || ''); }, [value]);
+
+  const updateCoords = useCallback(() => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setCoords({ top: rect.bottom + window.scrollY, left: rect.left + window.scrollX, width: Math.max(rect.width, 140) });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (show) {
+      updateCoords();
+      window.addEventListener('scroll', updateCoords, true);
+      window.addEventListener('resize', updateCoords);
+    }
+    return () => {
+      window.removeEventListener('scroll', updateCoords, true);
+      window.removeEventListener('resize', updateCoords);
+    };
+  }, [show, updateCoords]);
+
+  const handleSelect = async (v: string) => {
+    setVal(v);
+    onChange(v);
+    setShow(false);
+  };
+
+  const handleCreate = async () => {
+    if (!val) return;
+    try {
+      await createValue.mutateAsync({ templateId: template.id, value: val, sortOrder: (template.values?.length || 0) + 1 });
+      onChange(val);
+      setShow(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const filteredValues = (template.values || []).filter((v: any) => v.value.toLowerCase().includes(val.toLowerCase()));
+
+  return (
+    <div ref={containerRef} className="relative w-full h-8 px-1">
+      <input 
+        type="text" 
+        value={val}
+        onFocus={() => setShow(true)}
+        onBlur={() => setTimeout(() => setShow(false), 200)}
+        onChange={(e) => setVal(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            const exact = filteredValues.find((v: any) => v.value.toLowerCase() === val.toLowerCase());
+            if (exact) handleSelect(exact.value);
+            else handleCreate();
+          }
+        }}
+        className="w-full h-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 transition-all uppercase placeholder:normal-case"
+        placeholder={`Type ${template.label}...`}
+      />
+      <AnimatePresence>
+        {show && (
+          <Portal>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl z-[10000] max-h-48 overflow-y-auto no-scrollbar py-1"
+              style={{ top: coords.top + 4 - window.scrollY, left: coords.left - window.scrollX, width: coords.width }}
+            >
+              {filteredValues.map((v: any) => (
+                <button 
+                  key={v.id} 
+                  onMouseDown={(e) => { e.preventDefault(); handleSelect(v.value); }}
+                  className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 text-[11px] font-medium transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0"
+                >
+                  {v.value}
+                </button>
+              ))}
+              {val && !filteredValues.some((v: any) => v.value.toLowerCase() === val.toLowerCase()) && (
+                <button 
+                  onMouseDown={(e) => { e.preventDefault(); handleCreate(); }}
+                  className="w-full text-left px-3 py-2.5 bg-indigo-50/50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 flex items-center justify-between"
+                >
+                  <span>Create "{val}"</span>
+                  <LuPlus className="w-3 h-3" />
+                </button>
+              )}
+              {filteredValues.length === 0 && !val && (
+                <div className="px-3 py-3 text-center text-[10px] text-gray-400 italic">No values available. Type to create.</div>
+              )}
+            </motion.div>
+          </Portal>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
