@@ -93,7 +93,9 @@ public class ProductService {
         existing.setSize(updatedProduct.getSize());
         existing.setColor(updatedProduct.getColor());
         existing.setBrand(updatedProduct.getBrand());
+        existing.setMaterial(updatedProduct.getMaterial());
         existing.setDiscountRate(updatedProduct.getDiscountRate());
+        existing.setAttributes(updatedProduct.getAttributes());
 
         if (updatedProduct.getIsActive() != null) {
             existing.setIsActive(updatedProduct.getIsActive());
