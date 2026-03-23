@@ -41,6 +41,7 @@ export interface ProductFormData {
     sellingPrice: number;
     purchasePrice: number;
     gstRate: number;
+    currentStock?: number;
     minStockLevel: number;
     description?: string;
     isActive?: boolean;

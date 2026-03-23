@@ -144,7 +144,7 @@ export default function ProductFormModal({
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-indigo-500 transition-all"
                   />
                   <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl z-10 hidden group-focus-within/size:block max-h-40 overflow-y-auto no-scrollbar">
-                    {templates?.find(t => t.templateType === 'SIZE' || t.name.toUpperCase() === 'SIZE')?.values.map(v => (
+                    {templates?.find(t => t.templateType === 'SIZE')?.values.map(v => (
                       <button key={v.id} type="button" onMouseDown={() => update('size', v.value)} className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs">{v.value}</button>
                     ))}
                   </div>
@@ -160,7 +160,7 @@ export default function ProductFormModal({
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-indigo-500 transition-all"
                   />
                   <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl z-10 hidden group-focus-within/color:block max-h-40 overflow-y-auto no-scrollbar">
-                    {templates?.find(t => t.templateType === 'COLOR' || t.name.toUpperCase() === 'COLOR')?.values.map(v => (
+                    {templates?.find(t => t.templateType === 'COLOR')?.values.map(v => (
                       <button key={v.id} type="button" onMouseDown={() => update('color', v.value)} className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs">{v.value}</button>
                     ))}
                   </div>
@@ -176,7 +176,7 @@ export default function ProductFormModal({
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-indigo-500 transition-all"
                   />
                   <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl z-10 hidden group-focus-within/brand:block max-h-40 overflow-y-auto no-scrollbar">
-                    {templates?.find(t => t.templateType === 'BRAND' || t.name.toUpperCase() === 'BRAND')?.values.map(v => (
+                    {templates?.find(t => t.templateType === 'BRAND')?.values.map(v => (
                       <button key={v.id} type="button" onMouseDown={() => update('brand', v.value)} className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs">{v.value}</button>
                     ))}
                   </div>

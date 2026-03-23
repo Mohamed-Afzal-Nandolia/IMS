@@ -13,6 +13,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useProductTemplates, useCreateProductTemplateValue } from '@/hooks/useProductTemplates';
 import { useToast } from '@/components/ui/Toast';
 import dynamic from 'next/dynamic';
+import { ProductSearchCell } from '@/components/ui/ProductSearchCell';
 
 const ProductFormModal = dynamic(() => import('../products/ProductFormModal'), { ssr: false });
 import { Portal } from '@/components/ui/Portal';
@@ -130,7 +131,6 @@ export default function PurchasesPage() {
 function PurchaseForm({ onClose }: { onClose: () => void }) {
   const invoiceType = 'purchase';
   const { data: partiesData } = useParties({ pageSize: 100 });
-  const { data: productsData } = useProducts({ pageSize: 100 });
   const createInvoice = useCreateInvoice();
   const createParty = useCreateParty();
   const createProduct = useCreateProduct();
@@ -206,28 +206,26 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
     const updated = [...items];
     (updated[index] as any)[field] = value;
 
-    if (field === 'productId' || field === 'productName') {
-      const product = productsData?.products?.find((p) => p.id === value || p.name === value);
-      if (product) {
-        updated[index].isNew = false;
-        updated[index].productId = product.id;
-        updated[index].productName = product.name;
-        updated[index].unitPrice = product.purchasePrice || 0;
-        updated[index].sellingPrice = product.sellingPrice || 0;
-        updated[index].taxRate = product.gstRate || 0;
-        updated[index].unit = product.unit || 'pcs';
-        updated[index].hsnCode = product.hsnCode || '';
-        updated[index].minStock = product.minStockLevel || 0;
-        updated[index].size = product.size || '';
-        updated[index].color = product.color || '';
-        updated[index].brand = product.brand || '';
-        updated[index].material = product.material || '';
-        updated[index].attributes = product.attributes ? JSON.parse(product.attributes) : {};
-        updated[index].deptId = product.category?.id;
-      } else if (field === 'productName') {
-        updated[index].isNew = true;
-        updated[index].productId = '';
-      }
+    if (field === '_productSelected') {
+      const product = value;
+      updated[index].isNew = false;
+      updated[index].productId = product.id;
+      updated[index].productName = product.name;
+      updated[index].unitPrice = product.purchasePrice || 0;
+      updated[index].sellingPrice = product.sellingPrice || 0;
+      updated[index].taxRate = product.gstRate || 0;
+      updated[index].unit = product.unit || 'pcs';
+      updated[index].hsnCode = product.hsnCode || '';
+      updated[index].minStock = product.minStockLevel || 0;
+      updated[index].size = product.size || '';
+      updated[index].color = product.color || '';
+      updated[index].brand = product.brand || '';
+      updated[index].material = product.material || '';
+      updated[index].attributes = product.attributes ? (typeof product.attributes === 'string' ? JSON.parse(product.attributes) : product.attributes) : {};
+      updated[index].deptId = product.category?.id;
+    } else if (field === 'productName') {
+      updated[index].isNew = true;
+      updated[index].productId = '';
     }
 
     const itm = updated[index];
@@ -409,7 +407,6 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
                       key={idx} 
                       idx={idx} 
                       itm={itm} 
-                      products={productsData?.products || []} 
                       templates={sortedTemplates}
                       updateItem={updateItem} 
                       removeItem={removeItem} 
@@ -461,102 +458,22 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
   );
 }
 
-function ItemRow({ idx, itm, products, templates, updateItem, removeItem }: any) {
-  const [search, setSearch] = useState(itm.productName || '');
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
+function ItemRow({ idx, itm, templates, updateItem, removeItem }: any) {
   const { data: depts } = useDepartments();
   const { data: cats } = useCategories();
-
-  const updateCoords = useCallback(() => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      setCoords({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    if (showDropdown) {
-      updateCoords();
-      window.addEventListener('scroll', updateCoords, true);
-      window.addEventListener('resize', updateCoords);
-    }
-    return () => {
-      window.removeEventListener('scroll', updateCoords, true);
-      window.removeEventListener('resize', updateCoords);
-    };
-  }, [showDropdown, updateCoords]);
 
   return (
     <tr className="group hover:bg-indigo-50/10 dark:hover:bg-indigo-900/5 transition-colors">
       <td className="px-3 py-2 text-[11px] font-mono text-gray-400 sticky left-0 bg-white dark:bg-gray-900 z-10 border-b border-gray-100 dark:border-gray-800 shadow-[1px_0_0_rgba(0,0,0,0.05)]">{idx + 1}</td>
       <td className="p-0 w-40 sticky left-10 bg-white dark:bg-gray-900 z-10 border-b border-gray-100 dark:border-gray-800 shadow-[1px_0_0_rgba(0,0,0,0.05)] transition-all">
-        <div ref={containerRef} className="relative w-full h-10 flex items-center">
-          <input 
-            type="text"
-            placeholder="Search product..."
-            value={search}
-            onFocus={(e) => {
-              e.target.select();
-              setShowDropdown(true);
-            }}
-            onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              updateItem(idx, 'productName', e.target.value);
-            }}
-            className={`w-full h-full bg-transparent border-none outline-none text-[13px] font-bold text-gray-900 dark:text-white focus:ring-1 focus:ring-inset focus:ring-indigo-500/30 pl-3 ${itm.isNew ? 'pr-12' : 'pr-3'} transition-shadow`}
-          />
-          {itm.isNew && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[8px] font-bold text-emerald-500 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-100">NEW</span>}
-          
-          <AnimatePresence>
-            {showDropdown && (
-              <Portal>
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="fixed bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-2xl z-[9999] max-h-48 overflow-y-auto no-scrollbar"
-                  style={{ 
-                    top: coords.top + 4 - window.scrollY, 
-                    left: coords.left - window.scrollX, 
-                    width: coords.width 
-                  }}
-                >
-                  {products.filter((p: any) => !search || p.name.toLowerCase().includes(search.toLowerCase())).map((p: any) => (
-                    <button 
-                      key={p.id} 
-                      onMouseDown={(e) => { 
-                        e.preventDefault();
-                        setSearch(p.name); 
-                        updateItem(idx, 'productId', p.id); 
-                        setShowDropdown(false);
-                      }} 
-                      className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 text-[11px] transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 outline-none"
-                    >
-                      <div className="font-bold text-gray-900 dark:text-white uppercase tracking-tight">{p.name}</div>
-                      <div className="flex justify-between items-center mt-0.5">
-                        <span className="text-[9px] text-gray-400 font-mono">
-                          {p.sku || 'N/A'} • {p.size || '-'} / {p.color || '-'} / {p.brand || '-'}
-                        </span>
-                        <span className="text-[10px] font-bold text-indigo-600">{formatCurrency(p.purchasePrice)}</span>
-                      </div>
-                    </button>
-                  ))}
-                  {products.filter((p: any) => !search || p.name.toLowerCase().includes(search.toLowerCase())).length === 0 && (
-                    <div className="px-3 py-4 text-center text-xs text-gray-400">No products found</div>
-                  )
-                  }
-                </motion.div>
-              </Portal>
-            )}
-          </AnimatePresence>
-        </div>
+        <ProductSearchCell 
+          value={itm.productName || ''}
+          onChange={(val) => updateItem(idx, 'productName', val)}
+          onSelect={(p: any) => updateItem(idx, '_productSelected', p)}
+          isNew={itm.isNew}
+          placeholder="Search product..."
+          className={`w-full h-10 bg-transparent border-none outline-none text-[13px] font-bold text-gray-900 dark:text-white focus:ring-1 focus:ring-inset focus:ring-indigo-500/30 pl-3 transition-shadow ${itm.isNew ? 'pr-12' : 'pr-3'}`}
+        />
       </td>
       {templates.map((t: any) => (
         <td key={t.id} className="px-2 py-2">

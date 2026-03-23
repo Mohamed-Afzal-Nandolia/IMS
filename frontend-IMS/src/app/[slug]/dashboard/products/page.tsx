@@ -12,6 +12,7 @@ import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, type
 import { useCategories } from '@/hooks/useCategories';
 import { useToast } from '@/components/ui/Toast';
 import { Portal } from '@/components/ui/Portal';
+import BulkProductForm from './BulkProductForm';
 
 // Lazy-load the heavy form modal — only downloads when user clicks "Add/Edit Product"
 // rule: bundle-dynamic-imports — large components not needed on initial render
@@ -28,6 +29,7 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [viewProduct, setViewProduct] = useState<Product | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<'list' | 'bulk'>('list');
 
   const { data, isLoading } = useProducts({ search, stockFilter, page, pageSize: 20 });
   const { data: categories } = useCategories();
@@ -39,6 +41,11 @@ export default function ProductsPage() {
   const products = data?.products || [];
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / 20);
+
+  // Short-circuit to bulk add form
+  if (activeView === 'bulk') {
+    return <BulkProductForm onClose={() => setActiveView('list')} />;
+  }
 
   const handleSubmit = async (formData: ProductFormData) => {
     try {
@@ -87,7 +94,7 @@ export default function ProductsPage() {
           <button className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"><LuUpload className="w-4 h-4" /> Import</button>
           <button className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2"><LuDownload className="w-4 h-4" /> Export</button>
           <button
-            onClick={() => { setEditingProduct(null); setShowModal(true); }}
+            onClick={() => setActiveView('bulk')}
             className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-all flex items-center gap-2"
           >
             <LuPlus className="w-4 h-4" /> Add Product
@@ -134,7 +141,7 @@ export default function ProductsPage() {
             <p className="text-gray-500 dark:text-gray-400 font-medium">No products found</p>
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Add your first product to get started</p>
             <button
-              onClick={() => { setEditingProduct(null); setShowModal(true); }}
+              onClick={() => setActiveView('bulk')}
               className="mt-4 px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700"
             >
               <LuPlus className="w-4 h-4 inline mr-1" /> Add Product
