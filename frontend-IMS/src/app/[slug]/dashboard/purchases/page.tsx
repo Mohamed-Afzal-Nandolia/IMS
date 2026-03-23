@@ -161,7 +161,23 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
     brand?: string;
     material?: string;
     attributes?: Record<string, string>;
-  })[]>([]);
+  })[]>([{
+    productId: '',
+    quantity: 1,
+    unitPrice: 0,
+    taxRate: 0,
+    taxAmount: 0,
+    totalPrice: 0,
+    unit: '',
+    hsnCode: '',
+    sellingPrice: 0,
+    minStock: 10,
+    size: '',
+    color: '',
+    brand: '',
+    material: '',
+    attributes: {}
+  }]);
   
   const [showProductModal, setShowProductModal] = useState(false);
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
@@ -228,7 +244,8 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
   const grandTotal = subtotal + totalGst;
 
   const handleSubmit = async () => {
-    if ((!partyId && !partySearch) || items.length === 0) { 
+    const filledItems = items.filter(itm => itm.productId || itm.productName);
+    if ((!partyId && !partySearch) || filledItems.length === 0) { 
       addToast({ type: 'warning', title: 'Missing data', message: 'Enter a supplier and add items' }); 
       return; 
     }
@@ -243,7 +260,7 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
       }
 
       // 2. Handle New Products Creation
-      const finalItems = await Promise.all(items.map(async (itm) => {
+      const finalItems = await Promise.all(filledItems.map(async (itm) => {
         if (itm.isNew) {
           const newProd = await createProduct.mutateAsync({
             name: itm.productName || 'New Product',
