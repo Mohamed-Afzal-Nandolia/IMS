@@ -124,25 +124,70 @@ export default function SalesPage() {
       <AnimatePresence>
         {viewInvoice && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setViewInvoice(null)}>
-            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Invoice {viewInvoice.invoiceNumber}</h2>
-                <button onClick={() => setViewInvoice(null)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700"><LuX className="w-5 h-5" /></button>
+            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-800 rounded-2xl max-w-3xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar flex flex-col">
+              <div className="flex items-center justify-between mb-4 shrink-0">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Invoice {viewInvoice.invoiceNumber}</h2>
+                <button onClick={() => setViewInvoice(null)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><LuX className="w-5 h-5" /></button>
               </div>
-              <div className="space-y-3 text-sm">
-                {[['Party', viewInvoice.party?.name || '—'], ['Date', new Date(viewInvoice.issueDate).toLocaleDateString('en-IN')],
-                  ['Due Date', viewInvoice.dueDate ? new Date(viewInvoice.dueDate).toLocaleDateString('en-IN') : '—'],
-                  ['Subtotal', formatCurrency(viewInvoice.subtotal)], ['CGST', formatCurrency(viewInvoice.cgstAmount)],
-                  ['SGST', formatCurrency(viewInvoice.sgstAmount)], ['IGST', formatCurrency(viewInvoice.igstAmount)],
-                  ['Total', formatCurrency(viewInvoice.totalAmount)], ['Paid', formatCurrency(viewInvoice.amountPaid || 0)],
-                  ['Notes', viewInvoice.notes || '—'],
-                ].map(([l, v]) => (
-                  <div key={l} className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-100 dark:border-gray-700/50 gap-1 sm:gap-4">
-                    <span className="text-gray-500 min-w-[100px] shrink-0">{l}</span>
-                    <span className="font-medium text-gray-900 dark:text-white capitalize text-right break-words whitespace-pre-wrap max-w-full">{v}</span>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 shrink-0">
+                <div className="space-y-3 text-sm bg-gray-50/50 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                  {[['Party', viewInvoice.party?.name || '—'], ['Date', new Date(viewInvoice.issueDate).toLocaleDateString('en-IN')],
+                    ['Due Date', viewInvoice.dueDate ? new Date(viewInvoice.dueDate).toLocaleDateString('en-IN') : '—'],
+                    ['Notes', viewInvoice.notes || '—'],
+                  ].map(([l, v]) => (
+                    <div key={l} className="flex flex-col sm:flex-row sm:justify-between py-1.5 gap-1 sm:gap-4">
+                      <span className="text-gray-500 dark:text-gray-400 min-w-[100px] shrink-0 font-medium">{l}</span>
+                      <span className="font-bold text-gray-900 dark:text-white capitalize text-right break-words whitespace-pre-wrap max-w-full">{v}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-3 text-sm bg-gray-50/50 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                  {[['Subtotal', formatCurrency(viewInvoice.subtotal)], ['CGST', formatCurrency(viewInvoice.cgstAmount)],
+                    ['SGST', formatCurrency(viewInvoice.sgstAmount)], ['IGST', formatCurrency(viewInvoice.igstAmount)],
+                    ['Total', formatCurrency(viewInvoice.totalAmount)], ['Paid', formatCurrency(viewInvoice.amountPaid || 0)],
+                  ].map(([l, v]) => (
+                    <div key={l} className="flex justify-between py-1.5 gap-4">
+                      <span className="text-gray-500 dark:text-gray-400 font-medium">{l}</span>
+                      <span className={`font-bold tabnum ${l === 'Total' ? 'text-indigo-600 dark:text-indigo-400 text-base' : 'text-gray-900 dark:text-white'}`}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Items Table */}
+              {viewInvoice.items && viewInvoice.items.length > 0 && (
+                <div className="flex-1 min-h-[300px] flex flex-col border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                  <div className="bg-gray-50 dark:bg-gray-800/80 px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2 shrink-0">
+                    <LuBox className="w-4 h-4 text-indigo-500" />
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Sold Products</h3>
                   </div>
-                ))}
-              </div>
+                  <div className="overflow-y-auto custom-scrollbar flex-1 bg-white dark:bg-gray-900">
+                    <table className="w-full text-xs">
+                      <thead className="text-left text-[10px] uppercase tracking-wider text-gray-500 bg-gray-50 dark:bg-gray-800/80 sticky top-0 border-b border-gray-200 dark:border-gray-700 z-10 shadow-sm">
+                        <tr>
+                          <th className="px-4 py-3 font-bold">Product / Item</th>
+                          <th className="px-4 py-3 font-bold text-center">Qty</th>
+                          <th className="px-4 py-3 font-bold text-right">Price</th>
+                          <th className="px-4 py-3 font-bold text-center">GST</th>
+                          <th className="px-4 py-3 font-bold text-right">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
+                        {viewInvoice.items.map((itm, i) => (
+                          <tr key={itm.id || i} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                            <td className="px-4 py-3 text-gray-900 dark:text-white font-semibold">{itm.product?.name || `Product ID: ${itm.productId}`}</td>
+                            <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300 font-bold tabnum">{itm.quantity}</td>
+                            <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400 font-mono tabnum">{formatCurrency(itm.unitPrice)}</td>
+                            <td className="px-4 py-3 text-center text-gray-500 font-mono text-[10px] tabnum">{itm.taxRate}%</td>
+                            <td className="px-4 py-3 text-right font-bold text-emerald-600 dark:text-emerald-400 tabnum">{formatCurrency(itm.totalPrice)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}
