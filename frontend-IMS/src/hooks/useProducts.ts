@@ -40,6 +40,7 @@ export interface ProductFormData {
     unit?: string;
     sellingPrice: number;
     purchasePrice: number;
+    mrp?: number;
     gstRate: number;
     currentStock?: number;
     minStockLevel: number;

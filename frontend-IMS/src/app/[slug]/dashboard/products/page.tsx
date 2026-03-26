@@ -148,34 +148,49 @@ export default function ProductsPage() {
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto pb-4 custom-scrollbar">
+            <table className="w-full min-w-[1800px] text-sm whitespace-nowrap">
               <thead>
-                <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50">
-                  <th className="px-5 py-3 font-medium">Product</th>
+                <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800">
+                  <th className="px-5 py-3 font-medium sticky left-0 bg-gray-50 dark:bg-gray-800 z-20 shadow-[1px_0_0_rgba(0,0,0,0.05)]">Product / Item</th>
                   <th className="px-5 py-3 font-medium">SKU</th>
-                  <th className="px-5 py-3 font-medium">HSN</th>
+                  <th className="px-5 py-3 font-medium text-center">HSN</th>
                   <th className="px-5 py-3 font-medium">Category</th>
-                  <th className="px-5 py-3 font-medium text-right">Price</th>
-                  <th className="px-5 py-3 font-medium text-center">GST</th>
+                  <th className="px-5 py-3 font-medium">Brand</th>
+                  <th className="px-5 py-3 font-medium text-center">Size</th>
+                  <th className="px-5 py-3 font-medium text-center">Color</th>
+                  <th className="px-5 py-3 font-medium text-center">Material</th>
+                  <th className="px-5 py-3 font-medium text-center">Unit</th>
+                  <th className="px-5 py-3 font-medium text-right">Purchase Price</th>
+                  <th className="px-5 py-3 font-medium text-right">Selling Price</th>
+                  <th className="px-5 py-3 font-medium text-right">MRP</th>
+                  <th className="px-5 py-3 font-medium text-center">GST%</th>
                   <th className="px-5 py-3 font-medium text-center">Stock</th>
+                  <th className="px-5 py-3 font-medium text-center">Min Stock</th>
                   <th className="px-5 py-3 font-medium text-center">Status</th>
-                  <th className="px-5 py-3 font-medium text-center">Actions</th>
+                  <th className="px-5 py-3 font-medium text-center sticky right-0 bg-gray-50 dark:bg-gray-800 z-20 shadow-[-1px_0_0_rgba(0,0,0,0.05)]">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
                 {products.map((p) => (
                   <tr key={p.id} className="border-b border-gray-100/50 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                    <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">{p.name}</td>
-                    <td className="px-5 py-3 text-gray-500 dark:text-gray-400 font-mono text-xs">{p.sku}</td>
-                    <td className="px-5 py-3 text-gray-500 dark:text-gray-400">{p.hsnCode}</td>
+                    <td className="px-5 py-3 font-medium text-gray-900 dark:text-white sticky left-0 bg-white dark:bg-gray-900 z-10 shadow-[1px_0_0_rgba(0,0,0,0.05)] min-w-[150px]">{p.name}</td>
+                    <td className="px-5 py-3 text-gray-500 dark:text-gray-400 font-mono text-xs">{p.sku || '—'}</td>
+                    <td className="px-5 py-3 text-center text-gray-500 dark:text-gray-400">{p.hsnCode || '—'}</td>
                     <td className="px-5 py-3 text-gray-500 dark:text-gray-400">{p.category?.name ?? '—'}</td>
-                    {/* tabnum: tabular-nums for aligned price column */}
+                    <td className="px-5 py-3 text-gray-500 dark:text-gray-400">{p.brand || '—'}</td>
+                    <td className="px-5 py-3 text-center text-gray-500 dark:text-gray-400">{p.size || '—'}</td>
+                    <td className="px-5 py-3 text-center text-gray-500 dark:text-gray-400 capitalize">{p.color || '—'}</td>
+                    <td className="px-5 py-3 text-center text-gray-500 dark:text-gray-400">{p.material || '—'}</td>
+                    <td className="px-5 py-3 text-center text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-gray-800/20 text-xs rounded font-bold uppercase mx-3 inline-block my-2 tracking-wider">{p.unit || '—'}</td>
+                    <td className="px-5 py-3 text-right text-gray-500 dark:text-gray-400 tabnum">{formatCurrency(p.purchasePrice)}</td>
                     <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white tabnum">{formatCurrency(p.sellingPrice)}</td>
-                    <td className="px-5 py-3 text-center text-gray-500 tabnum">{p.gstRate}%</td>
-                    <td className="px-5 py-3 text-center font-semibold text-gray-900 dark:text-white tabnum">{p.currentStock || 0}</td>
+                    <td className="px-5 py-3 text-right text-gray-500 dark:text-gray-400 tabnum">{formatCurrency(p.mrp)}</td>
+                    <td className="px-5 py-3 text-center text-gray-500 dark:text-gray-400 tabnum">{p.gstRate}%</td>
+                    <td className="px-5 py-3 text-center font-bold text-gray-900 dark:text-white tabnum">{p.currentStock || 0}</td>
+                    <td className="px-5 py-3 text-center text-gray-500 dark:text-gray-400 tabnum">{p.minStockLevel || 0}</td>
                     <td className="px-5 py-3 text-center">{stockBadge(p)}</td>
-                    <td className="px-5 py-3">
+                    <td className="px-5 py-3 sticky right-0 bg-white dark:bg-gray-900 z-10 shadow-[-1px_0_0_rgba(0,0,0,0.05)]">
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={() => setViewProduct(p)} aria-label="View product" className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-indigo-600"><LuEye className="w-4 h-4" /></button>
                         <button onClick={() => { setEditingProduct(p); setShowModal(true); }} aria-label="Edit product" className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-indigo-600"><LuPencil className="w-4 h-4" /></button>

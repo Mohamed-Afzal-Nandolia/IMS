@@ -29,6 +29,7 @@ const emptyRow = (key: number, defaultMinStock = 10): BulkRow => ({
   unit: 'pcs',
   sellingPrice: 0,
   purchasePrice: 0,
+  mrp: 0,
   gstRate: 0,
   currentStock: 0,
   minStockLevel: defaultMinStock,
@@ -80,6 +81,7 @@ export default function BulkProductForm({ onClose }: { onClose: () => void }) {
         hsnCode: p.hsnCode || '',
         sellingPrice: p.sellingPrice || 0,
         purchasePrice: p.purchasePrice || 0,
+        mrp: p.mrp || 0,
         gstRate: p.gstRate || 0,
         currentStock: p.currentStock || 0,
         minStockLevel: p.minStockLevel !== 10 ? r.minStockLevel : (p.minStockLevel || 10),
@@ -120,6 +122,7 @@ export default function BulkProductForm({ onClose }: { onClose: () => void }) {
             unit: r.unit,
             sellingPrice: r.sellingPrice,
             purchasePrice: r.purchasePrice,
+            mrp: (r as any).mrp || 0,
             gstRate: r.gstRate,
             currentStock: r.currentStock || 0,
             minStockLevel: r.minStockLevel,
@@ -175,21 +178,25 @@ export default function BulkProductForm({ onClose }: { onClose: () => void }) {
         <div className="relative overflow-x-auto overflow-y-visible pb-10 custom-scrollbar rounded-xl">
           <table className="w-full min-w-[1200px] border-separate border-spacing-0">
             <thead>
-              <tr className="text-left text-[9px] uppercase tracking-widest text-gray-400 font-bold bg-white dark:bg-gray-900 sticky top-0 z-10 border-b border-gray-100 dark:border-gray-800">
+              <tr className="text-left text-[11px] uppercase tracking-widest text-gray-500 font-bold bg-white dark:bg-gray-900 sticky top-0 z-10 border-b border-gray-100 dark:border-gray-800">
                 <th className="px-3 py-3 w-8 border-b border-gray-100 dark:border-gray-800">#</th>
-                <th className="px-3 py-3 w-44 border-b border-gray-100 dark:border-gray-800">Product / Item *</th>
-                {sortedTemplates.map(t => (
-                  <th key={t.id} className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">{t.label}</th>
-                ))}
+                <th className="px-3 py-3 w-44 border-b border-gray-100 dark:border-gray-800 sticky left-0 bg-white dark:bg-gray-900 shadow-[1px_0_0_rgba(0,0,0,0.05)]">Product / Item *</th>
+                <th className="px-2 py-3 w-32 border-b border-gray-100 dark:border-gray-800">SKU</th>
+                <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">Brand</th>
+                <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">Size</th>
+                <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">Color</th>
+                <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">Material</th>
+                <th className="px-2 py-3 w-24 border-b border-gray-100 dark:border-gray-800">Unit</th>
                 <th className="px-2 py-3 w-20 text-center border-b border-gray-100 dark:border-gray-800">Qty</th>
-                <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">Cost Price</th>
-                <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">Sell Price</th>
+                <th className="px-2 py-3 w-28 text-right border-b border-gray-100 dark:border-gray-800">Cost Price</th>
+                <th className="px-2 py-3 w-28 text-right border-b border-gray-100 dark:border-gray-800">Sell Price</th>
+                <th className="px-2 py-3 w-28 text-right border-b border-gray-100 dark:border-gray-800">MRP</th>
                 <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">HSN</th>
                 <th className="px-2 py-3 w-32 border-b border-gray-100 dark:border-gray-800">Hierarchy</th>
                 <th className="px-2 py-3 w-20 text-center border-b border-gray-100 dark:border-gray-800">GST%</th>
                 <th className="px-2 py-3 w-24 text-center border-b border-gray-100 dark:border-gray-800">Min Stock</th>
                 <th className="px-3 py-3 w-28 border-b border-gray-100 dark:border-gray-800 text-right">Total</th>
-                <th className="px-2 py-3 w-10 border-b border-gray-100 dark:border-gray-800"></th>
+                <th className="px-2 py-3 w-10 border-b border-gray-100 dark:border-gray-800 sticky right-0 bg-white dark:bg-gray-900 shadow-[-1px_0_0_rgba(0,0,0,0.05)]"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
@@ -251,7 +258,7 @@ function BulkRow({
       </td>
 
       {/* Name */}
-      <td className="p-0 border-b border-gray-100 dark:border-gray-800">
+      <td className="p-0 border-b border-gray-100 dark:border-gray-800 sticky left-0 bg-white dark:bg-gray-900 shadow-[1px_0_0_rgba(0,0,0,0.05)]">
         <ProductSearchCell 
           value={row.name}
           onChange={(val) => onChange('name', val)}
@@ -262,34 +269,65 @@ function BulkRow({
         />
       </td>
 
-      {/* Template attribute columns */}
-      {templates.map(t => (
-        <td key={t.id} className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
-          <AttributeCell
-            template={t}
-            value={
-              t.templateType === 'SIZE' ? (row.size || '') :
-              t.templateType === 'COLOR' ? (row.color || '') :
-              t.templateType === 'BRAND' ? (row.brand || '') :
-              t.templateType === 'MATERIAL' ? ((row as any).material || '') :
-              t.templateType === 'UNIT' ? (row.unit || '') :
-              (row as any).attributes?.[t.templateType] || ''
-            }
-            onChange={val => {
-              if (t.templateType === 'SIZE') onChange('size', val);
-              else if (t.templateType === 'COLOR') onChange('color', val);
-              else if (t.templateType === 'BRAND') onChange('brand', val);
-              else if (t.templateType === 'MATERIAL') onChange('material', val);
-              else if (t.templateType === 'UNIT') onChange('unit', val);
-              else {
-                const attrs = { ...((row as any).attributes || {}) };
-                attrs[t.templateType] = val;
-                onChange('attributes', attrs);
-              }
-            }}
-          />
-        </td>
-      ))}
+      {/* SKU */}
+      <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
+        <input
+          type="text"
+          value={row.sku || ''}
+          onChange={e => onChange('sku', e.target.value)}
+          className="w-full bg-transparent border-none outline-none text-[12px] font-mono text-gray-500 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8"
+        />
+      </td>
+
+      {/* Brand */}
+      <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
+        <input
+          type="text"
+          value={row.brand || ''}
+          onChange={e => onChange('brand', e.target.value)}
+          className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 uppercase placeholder:normal-case"
+        />
+      </td>
+
+      {/* Size */}
+      <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
+        <input
+          type="text"
+          value={row.size || ''}
+          onChange={e => onChange('size', e.target.value)}
+          className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 uppercase placeholder:normal-case"
+        />
+      </td>
+
+      {/* Color */}
+      <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
+        <input
+          type="text"
+          value={row.color || ''}
+          onChange={e => onChange('color', e.target.value)}
+          className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 capitalize placeholder:normal-case"
+        />
+      </td>
+
+      {/* Material */}
+      <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
+        <input
+          type="text"
+          value={row.material || ''}
+          onChange={e => onChange('material', e.target.value)}
+          className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 capitalize placeholder:normal-case"
+        />
+      </td>
+
+      {/* Unit */}
+      <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
+        <input
+          type="text"
+          value={row.unit || ''}
+          onChange={e => onChange('unit', e.target.value)}
+          className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 lowercase placeholder:normal-case"
+        />
+      </td>
 
       {/* Qty (Current Stock) */}
       <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
@@ -308,7 +346,7 @@ function BulkRow({
           type="number"
           value={row.purchasePrice || ''}
           onChange={e => onChange('purchasePrice', Number(e.target.value))}
-          className="w-full bg-transparent border-none outline-none text-[13px] font-mono focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum"
+          className="w-full bg-transparent border-none outline-none text-[13px] font-mono focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum text-right"
         />
       </td>
 
@@ -318,7 +356,17 @@ function BulkRow({
           type="number"
           value={row.sellingPrice || ''}
           onChange={e => onChange('sellingPrice', Number(e.target.value))}
-          className="w-full bg-transparent border-none outline-none text-[13px] font-mono text-emerald-600 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum"
+          className="w-full bg-transparent border-none outline-none text-[13px] font-mono text-emerald-600 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum text-right"
+        />
+      </td>
+
+      {/* MRP */}
+      <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
+        <input
+          type="number"
+          value={(row as any).mrp || ''}
+          onChange={e => onChange('mrp', Number(e.target.value))}
+          className="w-full bg-transparent border-none outline-none text-[13px] font-mono text-gray-500 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum text-right"
         />
       </td>
 
@@ -377,9 +425,9 @@ function BulkRow({
       </td>
 
       {/* Remove */}
-      <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
+      <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800 sticky right-0 bg-white dark:bg-gray-900 shadow-[-1px_0_0_rgba(0,0,0,0.05)]">
         <button onClick={onRemove} className="p-1.5 text-gray-300 hover:text-red-500 transition-colors">
-          <LuX className="w-3.5 h-3.5" />
+          <LuX className="w-4 h-4" />
         </button>
       </td>
     </tr>

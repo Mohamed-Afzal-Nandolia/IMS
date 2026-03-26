@@ -160,6 +160,8 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
     color?: string;
     brand?: string;
     material?: string;
+    sku?: string;
+    mrp?: number;
     attributes?: Record<string, string>;
   })[]>([{
     productId: '',
@@ -176,6 +178,8 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
     color: '',
     brand: '',
     material: '',
+    sku: '',
+    mrp: 0,
     attributes: {}
   }]);
   
@@ -199,6 +203,8 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
     color: '',
     brand: '',
     material: '',
+    sku: '',
+    mrp: 0,
     attributes: {}
   }]);
 
@@ -221,6 +227,8 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
       updated[index].color = product.color || '';
       updated[index].brand = product.brand || '';
       updated[index].material = product.material || '';
+      updated[index].sku = product.sku || '';
+      updated[index].mrp = product.mrp || 0;
       updated[index].attributes = product.attributes ? (typeof product.attributes === 'string' ? JSON.parse(product.attributes) : product.attributes) : {};
       updated[index].deptId = product.category?.id;
     } else if (field === 'productName') {
@@ -272,6 +280,8 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
             color: itm.color || '',
             brand: itm.brand || '',
             material: itm.material || '',
+            sku: itm.sku || '',
+            mrp: itm.mrp || 0,
             attributes: JSON.stringify(itm.attributes || {}),
             category_id: itm.subCatId || itm.catId || itm.deptId || null
           });
@@ -382,23 +392,27 @@ function PurchaseForm({ onClose }: { onClose: () => void }) {
             </div>
           ) : (
             <div className="relative overflow-x-auto overflow-y-visible pb-10 custom-scrollbar rounded-xl">
-              <table className="w-full min-w-[1000px] border-separate border-spacing-0">
+              <table className="w-full min-w-[1400px] border-separate border-spacing-0">
                 <thead>
-                  <tr className="text-left text-[9px] uppercase tracking-widest text-gray-400 font-bold bg-white dark:bg-gray-900 sticky top-0 z-10 transition-colors border-b border-gray-100 dark:border-gray-800">
+                  <tr className="text-left text-[11px] uppercase tracking-widest text-gray-500 font-bold bg-white dark:bg-gray-900 sticky top-0 z-10 transition-colors border-b border-gray-100 dark:border-gray-800">
                     <th className="px-3 py-3 w-10 sticky left-0 bg-white dark:bg-gray-900 z-20 border-b border-gray-100 dark:border-gray-800 shadow-[1px_0_0_rgba(0,0,0,0.05)]">#</th>
                     <th className="px-3 py-3 w-40 sticky left-10 bg-white dark:bg-gray-900 z-20 border-b border-gray-100 dark:border-gray-800 shadow-[1px_0_0_rgba(0,0,0,0.05)]">Product / Item *</th>
-                    {sortedTemplates.map(t => (
-                      <th key={t.id} className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">{t.label}</th>
-                    ))}
+                    <th className="px-2 py-3 w-32 border-b border-gray-100 dark:border-gray-800">SKU</th>
+                    <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">Brand</th>
+                    <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">Size</th>
+                    <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">Color</th>
+                    <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">Material</th>
+                    <th className="px-2 py-3 w-24 border-b border-gray-100 dark:border-gray-800">Unit</th>
                     <th className="px-2 py-3 w-24 border-b border-gray-100 dark:border-gray-800 text-center">Qty</th>
-                    <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">Cost Price</th>
-                    <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">Sell Price</th>
+                    <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800 text-right">Cost Price</th>
+                    <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800 text-right">Sell Price</th>
+                    <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800 text-right">MRP</th>
                     <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800">HSN</th>
                     <th className="px-2 py-3 w-32 border-b border-gray-100 dark:border-gray-800">Hierarchy</th>
                     <th className="px-2 py-3 w-20 border-b border-gray-100 dark:border-gray-800 text-center">GST%</th>
                     <th className="px-2 py-3 w-20 border-b border-gray-100 dark:border-gray-800 text-center">Min Stock</th>
                     <th className="px-3 py-3 w-28 border-b border-gray-100 dark:border-gray-800 text-right">Total</th>
-                    <th className="px-2 py-3 w-10 border-b border-gray-100 dark:border-gray-800"></th>
+                    <th className="px-2 py-3 w-10 border-b border-gray-100 dark:border-gray-800 sticky right-0 bg-white dark:bg-gray-900 shadow-[-1px_0_0_rgba(0,0,0,0.05)]"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
@@ -475,36 +489,17 @@ function ItemRow({ idx, itm, templates, updateItem, removeItem }: any) {
           className={`w-full h-10 bg-transparent border-none outline-none text-[13px] font-bold text-gray-900 dark:text-white focus:ring-1 focus:ring-inset focus:ring-indigo-500/30 pl-3 transition-shadow ${itm.isNew ? 'pr-12' : 'pr-3'}`}
         />
       </td>
-      {templates.map((t: any) => (
-        <td key={t.id} className="px-2 py-2">
-          <AttributeCell 
-            template={t} 
-            value={
-              t.templateType === 'SIZE' ? itm.size :
-              t.templateType === 'COLOR' ? itm.color :
-              t.templateType === 'BRAND' ? itm.brand :
-              t.templateType === 'MATERIAL' ? itm.material :
-              t.templateType === 'UNIT' ? itm.unit :
-              itm.attributes?.[t.templateType] || ''
-            }
-            onChange={(val: string) => {
-              if (t.templateType === 'SIZE') updateItem(idx, 'size', val);
-              else if (t.templateType === 'COLOR') updateItem(idx, 'color', val);
-              else if (t.templateType === 'BRAND') updateItem(idx, 'brand', val);
-              else if (t.templateType === 'MATERIAL') updateItem(idx, 'material', val);
-              else if (t.templateType === 'UNIT') updateItem(idx, 'unit', val);
-              else {
-                const attrs = { ...(itm.attributes || {}) };
-                attrs[t.templateType] = val;
-                updateItem(idx, 'attributes', attrs);
-              }
-            }}
-          />
-        </td>
-      ))}
+      <td className="px-2 py-2"><input type="text" value={itm.sku || ''} onChange={e => updateItem(idx, 'sku', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] font-mono text-gray-500 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8" /></td>
+      <td className="px-2 py-2"><input type="text" value={itm.brand || ''} onChange={e => updateItem(idx, 'brand', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 uppercase placeholder:normal-case" /></td>
+      <td className="px-2 py-2"><input type="text" value={itm.size || ''} onChange={e => updateItem(idx, 'size', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 uppercase placeholder:normal-case" /></td>
+      <td className="px-2 py-2"><input type="text" value={itm.color || ''} onChange={e => updateItem(idx, 'color', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 capitalize placeholder:normal-case" /></td>
+      <td className="px-2 py-2"><input type="text" value={itm.material || ''} onChange={e => updateItem(idx, 'material', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 capitalize placeholder:normal-case" /></td>
+      <td className="px-2 py-2"><input type="text" value={itm.unit || ''} onChange={e => updateItem(idx, 'unit', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 lowercase placeholder:normal-case" /></td>
+      
       <td className="px-2 py-2"><input type="number" value={itm.quantity} onChange={e => updateItem(idx, 'quantity', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] font-bold text-center focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum" /></td>
-      <td className="px-2 py-2"><input type="number" value={itm.unitPrice} onChange={e => updateItem(idx, 'unitPrice', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] font-mono focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum" /></td>
-      <td className="px-2 py-2"><input type="number" value={itm.sellingPrice} onChange={e => updateItem(idx, 'sellingPrice', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] font-mono text-emerald-600 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum" /></td>
+      <td className="px-2 py-2"><input type="number" value={itm.unitPrice} onChange={e => updateItem(idx, 'unitPrice', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] font-mono focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum text-right" /></td>
+      <td className="px-2 py-2"><input type="number" value={itm.sellingPrice} onChange={e => updateItem(idx, 'sellingPrice', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] font-mono text-emerald-600 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum text-right" /></td>
+      <td className="px-2 py-2"><input type="number" value={itm.mrp || 0} onChange={e => updateItem(idx, 'mrp', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] font-mono text-gray-500 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum text-right" /></td>
       <td className="px-2 py-2"><input type="text" value={itm.hsnCode} onChange={e => updateItem(idx, 'hsnCode', e.target.value)} className="w-full bg-transparent border-none outline-none text-[11px] text-gray-500 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 uppercase" /></td>
       <td className="px-2 py-2">
         <select value={itm.subCatId || itm.catId || itm.deptId || ''} onChange={e => updateItem(idx, 'subCatId', e.target.value)} className="w-full bg-transparent border-none outline-none text-[11px] text-gray-500 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 cursor-pointer">
@@ -522,9 +517,9 @@ function ItemRow({ idx, itm, templates, updateItem, removeItem }: any) {
       <td className="px-2 py-2"><input type="number" value={itm.taxRate} onChange={e => updateItem(idx, 'taxRate', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] text-center focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum" /></td>
       <td className="px-2 py-2"><input type="number" value={itm.minStock} onChange={e => updateItem(idx, 'minStock', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] text-center focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum" /></td>
       <td className="px-3 py-2 text-right font-bold text-gray-900 dark:text-white text-[13px] tabnum">{formatCurrency(itm.totalPrice)}</td>
-      <td className="px-2 py-2">
+      <td className="px-2 py-2 sticky right-0 bg-white dark:bg-gray-900 shadow-[-1px_0_0_rgba(0,0,0,0.05)]">
         <button onClick={() => removeItem(idx)} className="p-1.5 text-gray-300 hover:text-red-500 transition-colors">
-          <LuX className="w-3.5 h-3.5" />
+          <LuX className="w-4 h-4" />
         </button>
       </td>
     </tr>
