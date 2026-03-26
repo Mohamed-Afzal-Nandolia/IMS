@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils';
-import { LuPlus, LuSearch, LuPencil, LuTrash2, LuEye, LuFileText, LuX, LuLoader } from 'react-icons/lu';
+import { LuPlus, LuSearch, LuPencil, LuTrash2, LuEye, LuFileText, LuX, LuLoader, LuBox } from 'react-icons/lu';
+import { ProductSearchCell } from '@/components/ui/ProductSearchCell';
 import { useInvoices, useCreateInvoice, useDeleteInvoice, type Invoice, type InvoiceFormData, type InvoiceItem } from '@/hooks/useInvoices';
 import { useParties } from '@/hooks/useParties';
-import { useProducts } from '@/hooks/useProducts';
 import { useToast } from '@/components/ui/Toast';
 import { Portal } from '@/components/ui/Portal';
 
@@ -16,7 +16,7 @@ const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transiti
 export default function SalesPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [showModal, setShowModal] = useState(false);
+  const [activeView, setActiveView] = useState<'list' | 'create'>('list');
   const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
@@ -35,6 +35,10 @@ export default function SalesPage() {
     catch (err: any) { addToast({ type: 'error', title: 'Error', message: err.message }); }
   };
 
+  if (activeView === 'create') {
+    return <InvoiceForm invoiceType="sale" onClose={() => setActiveView('list')} />;
+  }
+
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
       <motion.div variants={item} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -42,7 +46,7 @@ export default function SalesPage() {
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">Sales Invoices</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{total} invoices</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-all flex items-center gap-2 self-start">
+        <button onClick={() => setActiveView('create')} className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-all flex items-center gap-2 self-start">
           <LuPlus className="w-4 h-4" /> New Invoice
         </button>
       </motion.div>
@@ -78,7 +82,7 @@ export default function SalesPage() {
             <LuFileText className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
             <p className="text-gray-500 font-medium">No invoices found</p>
             <p className="text-sm text-gray-400 mt-1">Create your first sales invoice</p>
-            <button onClick={() => setShowModal(true)} className="mt-4 px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold"><LuPlus className="w-4 h-4 inline mr-1" /> New Invoice</button>
+            <button onClick={() => setActiveView('create')} className="mt-4 px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold"><LuPlus className="w-4 h-4 inline mr-1" /> New Invoice</button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -163,20 +167,12 @@ export default function SalesPage() {
         )}
       </AnimatePresence>
       </Portal>
-
-      <Portal>
-      {/* New Invoice Modal */}
-      <AnimatePresence>
-        {showModal && <InvoiceFormModal invoiceType="sale" onClose={() => setShowModal(false)} />}
-      </AnimatePresence>
-      </Portal>
     </motion.div>
   );
 }
 
-function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClose: () => void }) {
+function InvoiceForm({ invoiceType, onClose }: { invoiceType: string; onClose: () => void }) {
   const { data: partiesData } = useParties({ pageSize: 100 });
-  const { data: productsData } = useProducts({ pageSize: 100 });
   const createInvoice = useCreateInvoice();
   const { addToast } = useToast();
 
@@ -184,7 +180,7 @@ function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClo
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
-  const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [items, setItems] = useState<(InvoiceItem & { productName?: string; isNew?: boolean; })[]>([{ productId: '', quantity: 1, unitPrice: 0, taxRate: 0, taxAmount: 0, totalPrice: 0 }]);
 
   const addItem = () => setItems([...items, { productId: '', quantity: 1, unitPrice: 0, taxRate: 0, taxAmount: 0, totalPrice: 0 }]);
 
@@ -192,21 +188,21 @@ function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClo
     const updated = [...items];
     (updated[index] as any)[field] = value;
 
-    if (field === 'productId' && productsData?.products) {
-      const product = productsData.products.find((p) => p.id === value);
-      if (product) {
-        updated[index].unitPrice = product.sellingPrice || 0;
-        updated[index].taxRate = product.gstRate || 0;
-        updated[index].productName = product.name;
-        (updated[index] as any).size = product.size || '';
-        (updated[index] as any).color = product.color || '';
-        (updated[index] as any).brand = product.brand || '';
-      }
+    if (field === '_productSelected') {
+      const product = value;
+      updated[index].isNew = false;
+      updated[index].productId = product.id;
+      updated[index].productName = product.name;
+      updated[index].unitPrice = product.sellingPrice || 0;
+      updated[index].taxRate = product.gstRate || 0;
+    } else if (field === 'productName') {
+      updated[index].isNew = true;
+      updated[index].productId = '';
     }
 
     const itm = updated[index];
-    const subtotal = itm.quantity * itm.unitPrice;
-    itm.taxAmount = subtotal * itm.taxRate / 100;
+    const subtotal = (itm.quantity || 0) * (itm.unitPrice || 0);
+    itm.taxAmount = subtotal * (itm.taxRate || 0) / 100;
     itm.totalPrice = subtotal + itm.taxAmount;
     setItems(updated);
   };
@@ -218,13 +214,21 @@ function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClo
   const grandTotal = subtotal + totalGst;
 
   const handleSubmit = async () => {
-    if (!partyId || items.length === 0) { addToast({ type: 'warning', title: 'Missing data', message: 'Select a party and add items' }); return; }
+    const filledItems = items.filter(itm => itm.productId);
+    const unselectedItems = items.filter(itm => itm.productName && !itm.productId);
+    
+    if (unselectedItems.length > 0) {
+      addToast({ type: 'warning', title: 'Invalid Product', message: 'You have typed a product name that is not selected. Please select an existing product from the dropdown.' });
+      return;
+    }
+
+    if (!partyId || filledItems.length === 0) { addToast({ type: 'warning', title: 'Missing data', message: 'Select a party and add valid items' }); return; }
     try {
       await createInvoice.mutateAsync({
         type: invoiceType, partyId: partyId, issueDate: invoiceDate, dueDate: dueDate || invoiceDate,
         subtotal,
         cgstAmount: totalGst / 2, sgstAmount: totalGst / 2, igstAmount: 0, totalAmount: grandTotal,
-        notes, items,
+        notes, items: filledItems,
       });
       addToast({ type: 'success', title: 'Invoice Created' });
       onClose();
@@ -232,15 +236,14 @@ function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClo
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-gray-900 rounded-3xl max-w-6xl w-full p-8 shadow-2xl max-h-[95vh] overflow-y-auto border border-gray-100 dark:border-gray-800">
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100 dark:border-gray-800">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">New {invoiceType === 'sale' ? 'Sales' : 'Purchase'} Invoice</h2>
-            <p className="text-sm text-gray-500 mt-1">Generate a professional tax invoice for your business.</p>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><LuX className="w-6 h-6" /></button>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 bg-white dark:bg-gray-900 rounded-3xl p-6 sm:p-10 border border-gray-100 dark:border-gray-800 shadow-sm relative">
+      <div className="flex items-center justify-between pb-6 border-b border-gray-100 dark:border-gray-800">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">New {invoiceType === 'sale' ? 'Sales' : 'Purchase'} Invoice</h2>
+          <p className="text-sm text-gray-500 mt-1">Generate a professional tax invoice for your business.</p>
         </div>
+        <button onClick={onClose} className="p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-400 transition-all"><LuX className="w-6 h-6" /></button>
+      </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
           <div>
@@ -261,40 +264,45 @@ function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClo
         </div>
 
         {/* Items */}
-        <div className="mb-8 p-6 bg-gray-50/50 dark:bg-gray-800/20 rounded-2xl border border-gray-100 dark:border-gray-800">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-base font-bold text-gray-900 dark:text-white">Invoice Items</h3>
-            <button onClick={addItem} className="px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-bold flex items-center gap-2 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all"><LuPlus className="w-4 h-4" /> Add Line Item</button>
+        <div className="mb-8 p-0 sm:p-4 bg-gray-50/30 dark:bg-gray-800/20 rounded-2xl border border-gray-100 dark:border-gray-800 transition-all">
+          <div className="flex items-center justify-between p-4 sm:px-2 sm:py-3 mb-2">
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <LuBox className="w-4 h-4 text-indigo-500" /> Invoice Items
+            </h3>
+            <button onClick={addItem} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 dark:shadow-none"><LuPlus className="w-3 h-3" /> Add Item</button>
           </div>
           {items.length === 0 ? (
-            <div className="text-center py-8 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
-              <p className="text-sm text-gray-400">No items added yet</p>
-              <button onClick={addItem} className="mt-2 text-sm text-indigo-600 font-medium">+ Add Item</button>
+            <div className="text-center py-10 mx-4 sm:mx-2 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl group hover:border-indigo-300 transition-colors pointer-events-none">
+              <LuBox className="w-10 h-10 mx-auto text-gray-300 mb-3 group-hover:scale-110 transition-transform" />
+              <p className="text-xs text-gray-500 font-medium tracking-wide uppercase">Your invoice is empty</p>
+              <button onClick={addItem} className="mt-4 pointer-events-auto px-5 py-2 bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-indigo-600 hover:text-indigo-700">+ Add First Item</button>
             </div>
           ) : (
-            <div className="space-y-2">
-              {items.map((itm, idx) => (
-                <div key={idx} className="grid grid-cols-12 gap-2 items-end bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl">
-                  <div className="col-span-4">
-                    <label className="text-xs text-gray-500">Product</label>
-                    <select value={itm.productId} onChange={(e) => updateItem(idx, 'productId', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none">
-                      <option value="">Select Product...</option>
-                      {(productsData?.products || []).map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} {p.size || p.color || p.brand ? `(${p.size || '-'}/${p.color || '-'}/${p.brand || '-'})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="col-span-1"><label className="text-xs text-gray-500">Qty</label><input type="number" min="1" value={itm.quantity} onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))} className="w-full px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm tabnum" /></div>
-                  <div className="col-span-2"><label className="text-xs text-gray-500">Price</label><input type="number" value={itm.unitPrice} onChange={(e) => updateItem(idx, 'unitPrice', Number(e.target.value))} className="w-full px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm tabnum" /></div>
-                  <div className="col-span-1"><label className="text-xs text-gray-500">GST%</label><input type="number" value={itm.taxRate} onChange={(e) => updateItem(idx, 'taxRate', Number(e.target.value))} className="w-full px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm tabnum" /></div>
-                  <div className="col-span-3 flex items-end gap-2">
-                    <div className="flex-1"><label className="text-xs text-gray-500">Total</label><p className="font-semibold text-sm text-gray-900 dark:text-white py-2 tabnum">{formatCurrency(itm.totalPrice)}</p></div>
-                    <button onClick={() => removeItem(idx)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><LuX className="w-4 h-4" /></button>
-                  </div>
-                </div>
-              ))}
+            <div className="relative overflow-x-auto overflow-y-visible pb-10 custom-scrollbar rounded-xl">
+              <table className="w-full min-w-[700px] border-separate border-spacing-0">
+                <thead>
+                  <tr className="text-left text-[9px] uppercase tracking-widest text-gray-400 font-bold bg-white dark:bg-gray-900 sticky top-0 z-10 transition-colors border-b border-gray-100 dark:border-gray-800">
+                    <th className="px-3 py-3 w-10 sticky left-0 bg-white dark:bg-gray-900 z-20 border-b border-gray-100 dark:border-gray-800 shadow-[1px_0_0_rgba(0,0,0,0.05)]">#</th>
+                    <th className="px-3 py-3 w-80 sticky left-10 bg-white dark:bg-gray-900 z-20 border-b border-gray-100 dark:border-gray-800 shadow-[1px_0_0_rgba(0,0,0,0.05)]">Product / Item *</th>
+                    <th className="px-2 py-3 w-28 border-b border-gray-100 dark:border-gray-800 text-center">Qty</th>
+                    <th className="px-2 py-3 w-36 border-b border-gray-100 dark:border-gray-800 text-right">Price</th>
+                    <th className="px-2 py-3 w-24 border-b border-gray-100 dark:border-gray-800 text-center">GST%</th>
+                    <th className="px-3 py-3 w-36 border-b border-gray-100 dark:border-gray-800 text-right">Total</th>
+                    <th className="px-2 py-3 w-12 border-b border-gray-100 dark:border-gray-800"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
+                  {items.map((itm, idx) => (
+                    <SalesItemRow 
+                      key={idx} 
+                      idx={idx} 
+                      itm={itm} 
+                      updateItem={updateItem} 
+                      removeItem={removeItem} 
+                    />
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
@@ -322,7 +330,34 @@ function InvoiceFormModal({ invoiceType, onClose }: { invoiceType: string; onClo
             {createInvoice.isPending && <LuLoader className="w-4 h-4 animate-spin" />} Save & Finalize Invoice
           </button>
         </div>
-      </motion.div>
     </motion.div>
   );
 }
+
+function SalesItemRow({ idx, itm, updateItem, removeItem }: any) {
+  return (
+    <tr className="group hover:bg-indigo-50/10 dark:hover:bg-indigo-900/5 transition-colors">
+      <td className="px-3 py-2 text-[11px] font-mono text-gray-400 sticky left-0 bg-white dark:bg-gray-900 z-10 border-b border-gray-100 dark:border-gray-800 shadow-[1px_0_0_rgba(0,0,0,0.05)]">{idx + 1}</td>
+      <td className="p-0 w-80 sticky left-10 bg-white dark:bg-gray-900 z-10 border-b border-gray-100 dark:border-gray-800 shadow-[1px_0_0_rgba(0,0,0,0.05)] transition-all">
+        <ProductSearchCell 
+          value={itm.productName || ''}
+          onChange={(val) => updateItem(idx, 'productName', val)}
+          onSelect={(p: any) => updateItem(idx, '_productSelected', p)}
+          isNew={itm.isNew}
+          placeholder="Search product..."
+          className={`w-full h-10 bg-transparent border-none outline-none text-[13px] font-bold text-gray-900 dark:text-white focus:ring-1 focus:ring-inset focus:ring-indigo-500/30 pl-3 transition-shadow ${itm.isNew ? 'pr-12' : 'pr-3'}`}
+        />
+      </td>
+      <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800"><input type="number" min="1" value={itm.quantity} onChange={e => updateItem(idx, 'quantity', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] font-bold text-center focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum" /></td>
+      <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800"><input type="number" value={itm.unitPrice} onChange={e => updateItem(idx, 'unitPrice', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] font-mono text-right focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum" /></td>
+      <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800"><input type="number" value={itm.taxRate} onChange={e => updateItem(idx, 'taxRate', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] text-center focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum" /></td>
+      <td className="px-3 py-2 text-right font-bold text-gray-900 dark:text-white text-[13px] tabnum border-b border-gray-100 dark:border-gray-800">{formatCurrency(itm.totalPrice)}</td>
+      <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
+        <button onClick={() => removeItem(idx)} className="p-1.5 text-gray-300 hover:text-red-500 transition-colors">
+          <LuX className="w-3.5 h-3.5" />
+        </button>
+      </td>
+    </tr>
+  );
+}
+
