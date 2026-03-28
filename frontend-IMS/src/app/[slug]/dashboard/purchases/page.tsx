@@ -659,7 +659,7 @@ function AttributeCell({ template, value, onChange }: { template: any; value: st
           }
         }}
         className="w-full h-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 transition-all uppercase placeholder:normal-case"
-        placeholder={`Type ${template.label}...`}
+        placeholder={`${template.label}...`}
       />
       <AnimatePresence>
         {show && (
