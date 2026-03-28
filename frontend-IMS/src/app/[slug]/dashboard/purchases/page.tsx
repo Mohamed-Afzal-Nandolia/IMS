@@ -564,7 +564,13 @@ function ItemRow({ idx, itm, templates, updateItem, removeItem }: any) {
           <input type="text" value={itm.material || ''} onChange={e => updateItem(idx, 'material', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 capitalize placeholder:normal-case" />
         )}
       </td>
-      <td className="px-2 py-2"><input type="text" value={itm.unit || ''} onChange={e => updateItem(idx, 'unit', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 lowercase placeholder:normal-case" /></td>
+      <td className="px-2 py-2">
+        {templates.find((t: any) => t.templateType === 'UNIT') ? (
+          <AttributeCell template={templates.find((t: any) => t.templateType === 'UNIT')} value={itm.unit || ''} onChange={(v) => updateItem(idx, 'unit', v)} />
+        ) : (
+          <input type="text" value={itm.unit || ''} onChange={e => updateItem(idx, 'unit', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 lowercase placeholder:normal-case" />
+        )}
+      </td>
       
       <td className="px-2 py-2"><input type="number" value={itm.quantity} onChange={e => updateItem(idx, 'quantity', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] font-bold text-center focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum" /></td>
       <td className="px-2 py-2"><input type="number" value={itm.unitPrice} onChange={e => updateItem(idx, 'unitPrice', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] font-mono focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum text-right" /></td>

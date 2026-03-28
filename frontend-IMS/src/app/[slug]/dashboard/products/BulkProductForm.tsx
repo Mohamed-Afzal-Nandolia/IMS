@@ -26,7 +26,7 @@ const emptyRow = (key: number, defaultMinStock = 10): BulkRow => ({
   sku: '',
   hsnCode: '',
   category_id: null,
-  unit: 'pcs',
+  unit: '',
   sellingPrice: 0,
   purchasePrice: 0,
   mrp: 0,
@@ -353,12 +353,20 @@ function BulkRow({
 
       {/* Unit */}
       <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
-        <input
-          type="text"
-          value={row.unit || ''}
-          onChange={e => onChange('unit', e.target.value)}
-          className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 lowercase placeholder:normal-case"
-        />
+        {templates.find(t => t.templateType === 'UNIT') ? (
+          <AttributeCell
+            template={templates.find(t => t.templateType === 'UNIT')}
+            value={row.unit || ''}
+            onChange={(v) => onChange('unit', v)}
+          />
+        ) : (
+          <input
+            type="text"
+            value={row.unit || ''}
+            onChange={e => onChange('unit', e.target.value)}
+            className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 lowercase placeholder:normal-case"
+          />
+        )}
       </td>
 
       {/* Qty (Current Stock) */}
