@@ -10,6 +10,7 @@ import { useDashboardStats, type TimeRange } from '@/hooks/useDashboard';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 
 // Lazy-load recharts — heavy chart library, not needed for initial render
 // rule: bundle-dynamic-imports — defers ~200KB of chart code
@@ -28,6 +29,8 @@ const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { st
 const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } };
 
 export default function DashboardPage() {
+  const params = useParams();
+  const slug = params.slug;
   const [range, setRange] = useState<TimeRange>('6months');
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
@@ -206,12 +209,13 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <motion.div variants={item}>
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Quick Actions</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {[
-            { label: 'Add Product', href: 'products', icon: LuPackage, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
-            { label: 'New Invoice', href: 'sales', icon: LuTrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-            { label: 'Add Party', href: 'parties', icon: LuUsers, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' },
-            { label: 'View Reports', href: 'reports', icon: LuArrowUpRight, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+            { label: 'Add Product', href: `/${slug}/dashboard/products?action=add`, icon: LuPackage, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+            { label: 'Sales Invoice', href: `/${slug}/dashboard/sales?action=new`, icon: LuTrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+            { label: 'Purchase Invoice', href: `/${slug}/dashboard/purchases?action=new`, icon: LuShoppingCart, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+            { label: 'Add Party', href: `/${slug}/dashboard/parties`, icon: LuUsers, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+            { label: 'View Reports', href: `/${slug}/dashboard/reports`, icon: LuArrowUpRight, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
           ].map((action) => (
             <Link key={action.label} href={action.href} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white dark:bg-gray-800/60 border border-gray-200/80 dark:border-gray-700/50 hover:shadow-md transition-shadow group">
               <div className={`w-10 h-10 rounded-xl ${action.bg} flex items-center justify-center group-hover:scale-110 transition-transform`}>

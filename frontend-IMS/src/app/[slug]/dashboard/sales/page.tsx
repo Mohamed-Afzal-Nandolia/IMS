@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils';
 import { LuPlus, LuSearch, LuPencil, LuTrash2, LuEye, LuFileText, LuX, LuLoader, LuBox } from 'react-icons/lu';
@@ -29,6 +29,18 @@ export default function SalesPage() {
 
   const totalSales = invoices.reduce((s, i) => s + (i.totalAmount || 0), 0);
   const totalPaid = invoices.reduce((s, i) => s + (i.amountPaid || 0), 0);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('action') === 'new') {
+        setActiveView('create');
+        params.delete('action');
+        const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : '');
+        window.history.replaceState(null, '', newUrl);
+      }
+    }
+  }, []);
 
   const handleDelete = async (id: string) => {
     try { await deleteInvoice.mutateAsync(id); addToast({ type: 'success', title: 'Invoice Deleted' }); setDeleteConfirm(null); }

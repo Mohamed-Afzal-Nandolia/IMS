@@ -281,42 +281,74 @@ function BulkRow({
 
       {/* Brand */}
       <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
-        <input
-          type="text"
-          value={row.brand || ''}
-          onChange={e => onChange('brand', e.target.value)}
-          className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 uppercase placeholder:normal-case"
-        />
+        {templates.find(t => t.templateType === 'BRAND') ? (
+          <AttributeCell
+            template={templates.find(t => t.templateType === 'BRAND')}
+            value={row.brand || ''}
+            onChange={(v) => onChange('brand', v)}
+          />
+        ) : (
+          <input
+            type="text"
+            value={row.brand || ''}
+            onChange={e => onChange('brand', e.target.value)}
+            className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 uppercase placeholder:normal-case"
+          />
+        )}
       </td>
 
       {/* Size */}
       <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
-        <input
-          type="text"
-          value={row.size || ''}
-          onChange={e => onChange('size', e.target.value)}
-          className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 uppercase placeholder:normal-case"
-        />
+        {templates.find(t => t.templateType === 'SIZE') ? (
+          <AttributeCell
+            template={templates.find(t => t.templateType === 'SIZE')}
+            value={row.size || ''}
+            onChange={(v) => onChange('size', v)}
+          />
+        ) : (
+          <input
+            type="text"
+            value={row.size || ''}
+            onChange={e => onChange('size', e.target.value)}
+            className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 uppercase placeholder:normal-case"
+          />
+        )}
       </td>
 
       {/* Color */}
       <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
-        <input
-          type="text"
-          value={row.color || ''}
-          onChange={e => onChange('color', e.target.value)}
-          className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 capitalize placeholder:normal-case"
-        />
+        {templates.find(t => t.templateType === 'COLOR') ? (
+          <AttributeCell
+            template={templates.find(t => t.templateType === 'COLOR')}
+            value={row.color || ''}
+            onChange={(v) => onChange('color', v)}
+          />
+        ) : (
+          <input
+            type="text"
+            value={row.color || ''}
+            onChange={e => onChange('color', e.target.value)}
+            className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 capitalize placeholder:normal-case"
+          />
+        )}
       </td>
 
       {/* Material */}
       <td className="px-2 py-2 border-b border-gray-100 dark:border-gray-800">
-        <input
-          type="text"
-          value={row.material || ''}
-          onChange={e => onChange('material', e.target.value)}
-          className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 capitalize placeholder:normal-case"
-        />
+        {templates.find(t => t.templateType === 'MATERIAL') ? (
+          <AttributeCell
+            template={templates.find(t => t.templateType === 'MATERIAL')}
+            value={row.material || ''}
+            onChange={(v) => onChange('material', v)}
+          />
+        ) : (
+          <input
+            type="text"
+            value={row.material || ''}
+            onChange={e => onChange('material', e.target.value)}
+            className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 capitalize placeholder:normal-case"
+          />
+        )}
       </td>
 
       {/* Unit */}

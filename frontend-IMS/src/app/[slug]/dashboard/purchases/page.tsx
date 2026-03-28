@@ -36,6 +36,18 @@ export default function PurchasesPage() {
   const total = data?.total || 0;
   const totalPurchases = invoices.reduce((s, i) => s + (i.totalAmount || 0), 0);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('action') === 'new') {
+        setActiveView('create');
+        params.delete('action');
+        const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : '');
+        window.history.replaceState(null, '', newUrl);
+      }
+    }
+  }, []);
+
   const handleDelete = async (id: string) => {
     try { await deleteInvoice.mutateAsync(id); addToast({ type: 'success', title: 'Deleted' }); setDeleteConfirm(null); }
     catch (err: any) { addToast({ type: 'error', title: 'Error', message: err.message }); }
@@ -524,10 +536,34 @@ function ItemRow({ idx, itm, templates, updateItem, removeItem }: any) {
         />
       </td>
       <td className="px-2 py-2"><input type="text" value={itm.sku || ''} onChange={e => updateItem(idx, 'sku', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] font-mono text-gray-500 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8" /></td>
-      <td className="px-2 py-2"><input type="text" value={itm.brand || ''} onChange={e => updateItem(idx, 'brand', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 uppercase placeholder:normal-case" /></td>
-      <td className="px-2 py-2"><input type="text" value={itm.size || ''} onChange={e => updateItem(idx, 'size', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 uppercase placeholder:normal-case" /></td>
-      <td className="px-2 py-2"><input type="text" value={itm.color || ''} onChange={e => updateItem(idx, 'color', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 capitalize placeholder:normal-case" /></td>
-      <td className="px-2 py-2"><input type="text" value={itm.material || ''} onChange={e => updateItem(idx, 'material', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 capitalize placeholder:normal-case" /></td>
+      <td className="px-2 py-2">
+        {templates.find((t: any) => t.templateType === 'BRAND') ? (
+          <AttributeCell template={templates.find((t: any) => t.templateType === 'BRAND')} value={itm.brand || ''} onChange={(v) => updateItem(idx, 'brand', v)} />
+        ) : (
+          <input type="text" value={itm.brand || ''} onChange={e => updateItem(idx, 'brand', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 uppercase placeholder:normal-case" />
+        )}
+      </td>
+      <td className="px-2 py-2">
+        {templates.find((t: any) => t.templateType === 'SIZE') ? (
+          <AttributeCell template={templates.find((t: any) => t.templateType === 'SIZE')} value={itm.size || ''} onChange={(v) => updateItem(idx, 'size', v)} />
+        ) : (
+          <input type="text" value={itm.size || ''} onChange={e => updateItem(idx, 'size', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 uppercase placeholder:normal-case" />
+        )}
+      </td>
+      <td className="px-2 py-2">
+        {templates.find((t: any) => t.templateType === 'COLOR') ? (
+          <AttributeCell template={templates.find((t: any) => t.templateType === 'COLOR')} value={itm.color || ''} onChange={(v) => updateItem(idx, 'color', v)} />
+        ) : (
+          <input type="text" value={itm.color || ''} onChange={e => updateItem(idx, 'color', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 capitalize placeholder:normal-case" />
+        )}
+      </td>
+      <td className="px-2 py-2">
+        {templates.find((t: any) => t.templateType === 'MATERIAL') ? (
+          <AttributeCell template={templates.find((t: any) => t.templateType === 'MATERIAL')} value={itm.material || ''} onChange={(v) => updateItem(idx, 'material', v)} />
+        ) : (
+          <input type="text" value={itm.material || ''} onChange={e => updateItem(idx, 'material', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 capitalize placeholder:normal-case" />
+        )}
+      </td>
       <td className="px-2 py-2"><input type="text" value={itm.unit || ''} onChange={e => updateItem(idx, 'unit', e.target.value)} className="w-full bg-transparent border-none outline-none text-[12px] text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 lowercase placeholder:normal-case" /></td>
       
       <td className="px-2 py-2"><input type="number" value={itm.quantity} onChange={e => updateItem(idx, 'quantity', Number(e.target.value))} className="w-full bg-transparent border-none outline-none text-[13px] font-bold text-center focus:ring-1 focus:ring-indigo-500 rounded px-1 h-8 tabnum" /></td>

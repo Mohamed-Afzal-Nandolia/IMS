@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils';
@@ -41,6 +41,19 @@ export default function ProductsPage() {
   const products = data?.products || [];
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / 20);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('action') === 'add') {
+        setActiveView('bulk');
+        // Clean up the URL to just /products without the query param
+        params.delete('action');
+        const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : '');
+        window.history.replaceState(null, '', newUrl);
+      }
+    }
+  }, []);
 
   // Short-circuit to bulk add form
   if (activeView === 'bulk') {
