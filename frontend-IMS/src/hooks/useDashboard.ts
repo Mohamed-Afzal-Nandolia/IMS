@@ -118,6 +118,59 @@ export function useDashboardStats(range: TimeRange = '6months') {
                 .sort((a: any, b: any) => new Date(b.issueDate || b.createdAt).getTime() - new Date(a.issueDate || a.createdAt).getTime())
                 .slice(0, 5);
 
+            // --- New Analytics Computations ---
+            
+            // 1. Top Products (based on sales)
+            const productSalesMap: Record<string, { name: string; value: number; quantity: number }> = {};
+            sales.forEach((inv: any) => {
+                if (inv.items) {
+                    inv.items.forEach((item: any) => {
+                        const name = item.product?.name || item.productName || `ID: ${item.productId?.slice(0,8)}`;
+                        if (!productSalesMap[name]) {
+                            productSalesMap[name] = { name, value: 0, quantity: 0 };
+                        }
+                        productSalesMap[name].value += item.totalPrice || 0;
+                        productSalesMap[name].quantity += item.quantity || 0;
+                    });
+                }
+            });
+            const topProducts = Object.values(productSalesMap)
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 5);
+
+            // 2. Sales by Category
+            const categorySalesMap: Record<string, { name: string; value: number }> = {};
+            sales.forEach((inv: any) => {
+                if (inv.items) {
+                    inv.items.forEach((item: any) => {
+                        const catName = item.product?.category?.name || 'Other';
+                        if (!categorySalesMap[catName]) {
+                            categorySalesMap[catName] = { name: catName, value: 0 };
+                        }
+                        categorySalesMap[catName].value += item.totalPrice || 0;
+                    });
+                }
+            });
+            const categoryData = Object.values(categorySalesMap)
+                .sort((a, b) => b.value - a.value);
+
+            // 3. Inventory Status Breakdown
+            let inStock = 0;
+            let outOfStock = 0;
+            let lowSCount = 0;
+            products.forEach((p: any) => {
+                const stock = p.currentStock ?? 0;
+                const threshold = p.minStockLevel || globalMinStock;
+                if (stock <= 0) outOfStock++;
+                else if (stock < threshold) lowSCount++;
+                else inStock++;
+            });
+            const inventoryStatusData = [
+                { name: 'In Stock', value: inStock, color: '#10b981' },
+                { name: 'Low Stock', value: lowSCount, color: '#f59e0b' },
+                { name: 'Out of Stock', value: outOfStock, color: '#ef4444' },
+            ];
+
             return {
                 totalSales,
                 totalPurchases,
@@ -130,6 +183,9 @@ export function useDashboardStats(range: TimeRange = '6months') {
                 recentInvoices,
                 chartData,
                 totalSalesTax,
+                topProducts,
+                categoryData,
+                inventoryStatusData,
             };
         },
         refetchInterval: 30000, 

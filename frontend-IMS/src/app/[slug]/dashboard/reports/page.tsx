@@ -8,6 +8,10 @@ import { useProducts } from '@/hooks/useProducts';
 import { useParties } from '@/hooks/useParties';
 import { useDashboardStats, type TimeRange } from '@/hooks/useDashboard';
 import { useState, useEffect } from 'react';
+const CategoryDistributionChart = dynamic(() => import('@/components/reports/AnalyticsCharts').then(mod => mod.CategoryDistributionChart), { ssr: false, loading: () => <ChartSkeleton /> });
+const TopProductsChart = dynamic(() => import('@/components/reports/AnalyticsCharts').then(mod => mod.TopProductsChart), { ssr: false, loading: () => <ChartSkeleton /> });
+const InventoryStatusChart = dynamic(() => import('@/components/reports/AnalyticsCharts').then(mod => mod.InventoryStatusChart), { ssr: false, loading: () => <ChartSkeleton /> });
+const CashFlowChart = dynamic(() => import('@/components/reports/AnalyticsCharts').then(mod => mod.CashFlowChart), { ssr: false, loading: () => <ChartSkeleton /> });
 
 // Lazy-load recharts — defers heavy chart library off the initial bundle
 // rule: bundle-dynamic-imports
@@ -15,6 +19,14 @@ const ReportsChart = dynamic(() => import('@/components/reports/ReportsChart'), 
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } };
+
+function ChartSkeleton() {
+  return (
+    <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-xl">
+      <LuLoader className="w-8 h-8 animate-spin text-indigo-500" />
+    </div>
+  );
+}
 
 // Revenue analytics are now computed dynamically from useDashboardStats()
 
@@ -77,42 +89,83 @@ export default function ReportsPage() {
         </motion.div>
       )}
 
-      {/* Revenue Chart */}
-      <motion.div variants={item} className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 p-5 xl:p-6 mt-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Revenue Overview</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {(range === '7days' || range === '30days') ? 'Daily' : 'Monthly'} revenue vs profit
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <select
-              value={range}
-              onChange={(e) => setRange(e.target.value as TimeRange)}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors outline-none"
-            >
-              <option value="7days">Last 7 days</option>
-              <option value="30days">Last 30 days</option>
-              <option value="6months">Last 6 months</option>
-              <option value="thisYear">This Year</option>
-            </select>
-            <button className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <LuDownload className="w-4 h-4 text-gray-500" />
-              Export
-            </button>
-          </div>
-        </div>
-        <div className="h-[350px] w-full">
-          {isChartLoading ? (
-            <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-xl">
-              <LuLoader className="w-8 h-8 animate-spin text-indigo-500" />
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        
+        {/* Revenue Chart (Primary) */}
+        <motion.div variants={item} className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 p-5 xl:p-6 xl:col-span-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Revenue Overview</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {(range === '7days' || range === '30days') ? 'Daily' : 'Monthly'} revenue vs profit
+              </p>
             </div>
-          ) : (
-            <ReportsChart data={stats?.chartData || []} />
-          )}
-        </div>
-      </motion.div>
+            <div className="flex items-center gap-2">
+              <select
+                value={range}
+                onChange={(e) => setRange(e.target.value as TimeRange)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors outline-none"
+              >
+                <option value="7days">Last 7 days</option>
+                <option value="30days">Last 30 days</option>
+                <option value="6months">Last 6 months</option>
+                <option value="thisYear">This Year</option>
+              </select>
+              <button className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                <LuDownload className="w-4 h-4 text-gray-500" />
+                Export
+              </button>
+            </div>
+          </div>
+          <div className="h-[350px] w-full">
+            {isChartLoading ? (
+              <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-xl">
+                <LuLoader className="w-8 h-8 animate-spin text-indigo-500" />
+              </div>
+            ) : (
+              <ReportsChart data={stats?.chartData || []} />
+            )}
+          </div>
+        </motion.div>
+
+        {/* Cash Flow Analysis */}
+        <motion.div variants={item} className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 p-5 xl:p-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Cash Flow Analysis</h2>
+          <p className="text-sm text-gray-500 mb-6">Comparison of total sales and purchases</p>
+          <div className="h-[350px] w-full">
+            {isChartLoading ? <ChartSkeleton /> : <CashFlowChart data={stats?.chartData || []} />}
+          </div>
+        </motion.div>
+
+        {/* Inventory Health */}
+        <motion.div variants={item} className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 p-5 xl:p-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Inventory Health</h2>
+          <p className="text-sm text-gray-500 mb-6">Stock availability status</p>
+          <div className="h-[350px] w-full">
+            {isChartLoading ? <ChartSkeleton /> : <InventoryStatusChart data={stats?.inventoryStatusData || []} />}
+          </div>
+        </motion.div>
+
+        {/* Top Performing Products */}
+        <motion.div variants={item} className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 p-5 xl:p-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Top Performing Products</h2>
+          <p className="text-sm text-gray-500 mb-6">Top 5 products by revenue contribution</p>
+          <div className="h-[300px] w-full">
+            {isChartLoading ? <ChartSkeleton /> : <TopProductsChart data={stats?.topProducts || []} />}
+          </div>
+        </motion.div>
+
+        {/* Sales by Category */}
+        <motion.div variants={item} className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 p-5 xl:p-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Sales by Category</h2>
+          <p className="text-sm text-gray-500 mb-6">Revenue distribution across categories</p>
+          <div className="h-[300px] w-full">
+            {isChartLoading ? <ChartSkeleton /> : <CategoryDistributionChart data={stats?.categoryData || []} />}
+          </div>
+        </motion.div>
+
+      </div>
     </motion.div>
   );
 }
