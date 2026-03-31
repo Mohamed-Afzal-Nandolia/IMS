@@ -3,11 +3,18 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 
-export type TimeRange = '7days' | '30days' | '6months' | 'thisYear';
+export type TimeRange = '7days' | '30days' | '3months' | '6months' | 'thisYear' | 'custom' | 'specificYear';
 
-export function useDashboardStats(range: TimeRange = '6months') {
+export interface DashboardFilter {
+    range: TimeRange;
+    from?: string;
+    to?: string;
+    year?: number;
+}
+
+export function useDashboardStats(filter: DashboardFilter = { range: '6months' }) {
     return useQuery({
-        queryKey: ['dashboard', 'stats', range],
+        queryKey: ['dashboard', 'stats', filter],
         queryFn: async () => {
             const params = { pageSize: 1000 };
             const [salesRes, purchasesRes, productsRes, partiesRes, businessRes] = await Promise.all([
@@ -30,24 +37,66 @@ export function useDashboardStats(range: TimeRange = '6months') {
                 return [];
             };
 
-            const sales = getArray(salesRes);
-            const purchases = getArray(purchasesRes);
+            const allSales = getArray(salesRes);
+            const allPurchases = getArray(purchasesRes);
             const products = getArray(productsRes);
             const parties = getArray(partiesRes);
 
+            // --- Apply Filtering ---
+            const now = new Date();
+            let startDate: Date | null = null;
+            let endDate: Date = new Date();
+            let isDaily = false;
+
+            if (filter.range === '7days') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0);
+                isDaily = true;
+            } else if (filter.range === '30days') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0);
+                isDaily = true;
+            } else if (filter.range === '3months') {
+                startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1, 0, 0, 0);
+            } else if (filter.range === '6months') {
+                startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1, 0, 0, 0);
+            } else if (filter.range === 'thisYear') {
+                startDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
+            } else if (filter.range === 'specificYear' && filter.year) {
+                startDate = new Date(filter.year, 0, 1, 0, 0, 0);
+                endDate = new Date(filter.year, 11, 31, 23, 59, 59);
+            } else if (filter.range === 'custom' && filter.from && filter.to) {
+                startDate = new Date(filter.from);
+                endDate = new Date(filter.to);
+                endDate.setHours(23, 59, 59, 999);
+                const diffDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                isDaily = diffDays <= 65; // Use daily points for ranges up to 2 months
+            } else {
+                // Default to 6 months
+                startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1, 0, 0, 0);
+            }
+
+            const filterByDate = (inv: any) => {
+                const date = new Date(inv.issueDate || inv.createdAt);
+                if (startDate && date < startDate) return false;
+                if (date > endDate) return false;
+                return true;
+            };
+
+            const sales = allSales.filter(filterByDate);
+            const purchases = allPurchases.filter(filterByDate);
+
+            // --- Totals ---
             const totalSales = sales.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
             const totalPurchases = purchases.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
             const totalSalesTax = sales.reduce((sum: number, inv: any) => sum + (inv.cgstAmount || 0) + (inv.sgstAmount || 0) + (inv.igstAmount || 0), 0);
 
-            // Aggregate data for charts based on range
+            // --- Chart Data ---
             const chartData = [];
-            const now = new Date();
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-            if (range === '7days' || range === '30days') {
-                const days = range === '7days' ? 7 : 30;
-                for (let i = days - 1; i >= 0; i--) {
-                    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+            if (isDaily && startDate) {
+                const diffDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                for (let i = 0; i <= diffDays; i++) {
+                    const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
                     const dateStr = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
                     const dayStart = new Date(d.setHours(0, 0, 0, 0));
                     const dayEnd = new Date(d.setHours(23, 59, 59, 999));
@@ -74,13 +123,13 @@ export function useDashboardStats(range: TimeRange = '6months') {
                         profit: dailySales - dailyPurchases
                     });
                 }
-            } else {
-                const monthsCount = range === '6months' ? 6 : (now.getMonth() + 1);
-                for (let i = monthsCount - 1; i >= 0; i--) {
-                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                    const monthName = months[d.getMonth()];
-                    const year = d.getFullYear();
-                    const month = d.getMonth();
+            } else if (startDate) {
+                // Monthly aggregation
+                let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+                while (current <= endDate) {
+                    const month = current.getMonth();
+                    const year = current.getFullYear();
+                    const monthName = months[month];
 
                     const monthlySales = sales
                         .filter((inv: any) => {
@@ -97,12 +146,14 @@ export function useDashboardStats(range: TimeRange = '6months') {
                         .reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
 
                     chartData.push({
-                        name: monthName,
+                        name: `${monthName} ${year % 100}`,
                         sales: monthlySales,
                         purchases: monthlyPurchases,
                         revenue: monthlySales,
                         profit: monthlySales - monthlyPurchases
                     });
+
+                    current.setMonth(current.getMonth() + 1);
                 }
             }
 

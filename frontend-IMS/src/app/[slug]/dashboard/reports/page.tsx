@@ -6,7 +6,7 @@ import { LuChartBar, LuLoader, LuTrendingUp, LuPackage, LuUsers, LuFileText, LuD
 import dynamic from 'next/dynamic';
 import { useProducts } from '@/hooks/useProducts';
 import { useParties } from '@/hooks/useParties';
-import { useDashboardStats, type TimeRange } from '@/hooks/useDashboard';
+import { useDashboardStats, type DashboardFilter, type TimeRange } from '@/hooks/useDashboard';
 import { useState, useEffect } from 'react';
 const CategoryDistributionChart = dynamic(() => import('@/components/reports/AnalyticsCharts').then(mod => mod.CategoryDistributionChart), { ssr: false, loading: () => <ChartSkeleton /> });
 const TopProductsChart = dynamic(() => import('@/components/reports/AnalyticsCharts').then(mod => mod.TopProductsChart), { ssr: false, loading: () => <ChartSkeleton /> });
@@ -32,11 +32,18 @@ function ChartSkeleton() {
 
 
 export default function ReportsPage() {
-  const [range, setRange] = useState<TimeRange>('6months');
+  const [filter, setFilter] = useState<DashboardFilter>({ range: '6months' });
   const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => { setIsMounted(true); }, []);
+  const [isScrolled, setIsScrolled] = useState(false);
 
-  const { data: stats, isLoading: lstats } = useDashboardStats(range);
+  useEffect(() => { 
+    setIsMounted(true); 
+    const handleScroll = () => setIsScrolled(window.scrollY > 120);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const { data: stats, isLoading: lstats } = useDashboardStats(filter);
   const { data: productsData, isLoading: lprod } = useProducts({ pageSize: 200 });
   const { data: partiesData, isLoading: lpar } = useParties({ pageSize: 200 });
   const isCardsLoading = !isMounted || (lstats && !stats) || lprod || lpar;
@@ -63,10 +70,94 @@ export default function ReportsPage() {
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-      <motion.div variants={item}>
+      {/* Static Header */}
+      <motion.div variants={item} className="mb-2">
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">Reports</h1>
         <p className="text-sm text-gray-500 mt-1">Generated from your business data</p>
       </motion.div>
+
+      {/* Floating Filter Pill Container (Prevents layout jitter) */}
+      <div className="relative h-20 mb-4">
+        <motion.div 
+          layout
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          className={`z-50 flex items-center transition-shadow duration-500             ${isScrolled 
+              ? 'fixed top-[88px] right-8 w-max bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl px-6 py-3 rounded-full border border-gray-200 dark:border-gray-700 shadow-2xl shadow-black/10' 
+              : 'relative w-full justify-between bg-white dark:bg-gray-800/60 p-4 rounded-2xl border border-gray-200/80 dark:border-gray-700/50'
+            }`}
+        >
+          {!isScrolled && (
+            <div className="hidden lg:block">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white">Dashboard Controls</h3>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Live Analytics</p>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {filter.range === 'custom' && (
+              <div className={`flex items-center gap-3 animate-in fade-in slide-in-from-right-2 duration-300 ${isScrolled ? 'mr-1' : ''}`}>
+                <input
+                  type="date"
+                  value={filter.from || ''}
+                  onChange={(e) => setFilter({ ...filter, from: e.target.value })}
+                  className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-xs font-medium outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+                <span className="text-gray-400 text-[10px] font-black uppercase">To</span>
+                <input
+                  type="date"
+                  value={filter.to || ''}
+                  onChange={(e) => setFilter({ ...filter, to: e.target.value })}
+                  className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-xs font-medium outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+            )}
+
+            {filter.range === 'specificYear' && (
+              <select
+                value={filter.year || new Date().getFullYear()}
+                onChange={(e) => setFilter({ ...filter, year: Number(e.target.value) })}
+                className={`px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-xs font-medium outline-none hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors animate-in fade-in slide-in-from-right-2 duration-300 ${isScrolled ? 'mr-1' : ''}`}
+              >
+                {[0, 1, 2, 3, 4].map((i) => {
+                  const y = new Date().getFullYear() - i;
+                  return <option key={y} value={y}>{y}</option>;
+                })}
+              </select>
+            )}
+
+            <div className={`flex items-center bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800 ${isScrolled ? 'p-1' : 'p-1'}`}>
+              <select
+                value={filter.range}
+                onChange={(e) => {
+                  const range = e.target.value as TimeRange;
+                  const newFilter: DashboardFilter = { range };
+                  if (range === 'specificYear') newFilter.year = new Date().getFullYear();
+                  if (range === 'custom') {
+                    newFilter.from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                    newFilter.to = new Date().toISOString().split('T')[0];
+                  }
+                  setFilter(newFilter);
+                }}
+                className={`bg-transparent text-xs font-bold text-gray-700 dark:text-gray-300 outline-none cursor-pointer ${isScrolled ? 'px-4 py-1.5' : 'px-3 py-1.5'}`}
+              >
+                <option value="7days">7 Days</option>
+                <option value="30days">1 Month</option>
+                <option value="3months">3 Months</option>
+                <option value="6months">6 Months</option>
+                <option value="thisYear">This Year</option>
+                <option value="specificYear">Full Year</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+
+            <button className={`flex items-center gap-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm ${isScrolled ? 'rounded-full p-2.5' : 'px-4 py-2'}`}>
+              <LuDownload className="w-4 h-4" />
+              {!isScrolled && "Export"}
+            </button>
+          </div>
+
+        </motion.div>
+      </div>
 
       {isCardsLoading ? (
         <motion.div variants={item} className="flex flex-col items-center justify-center py-32">
@@ -94,29 +185,11 @@ export default function ReportsPage() {
         
         {/* Revenue Chart (Primary) */}
         <motion.div variants={item} className="bg-white dark:bg-gray-800/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/50 p-5 xl:p-6 xl:col-span-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Revenue Overview</h2>
-              <p className="text-sm text-gray-500 mt-1">
-                {(range === '7days' || range === '30days') ? 'Daily' : 'Monthly'} revenue vs profit
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={range}
-                onChange={(e) => setRange(e.target.value as TimeRange)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors outline-none"
-              >
-                <option value="7days">Last 7 days</option>
-                <option value="30days">Last 30 days</option>
-                <option value="6months">Last 6 months</option>
-                <option value="thisYear">This Year</option>
-              </select>
-              <button className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <LuDownload className="w-4 h-4 text-gray-500" />
-                Export
-              </button>
-            </div>
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Revenue Overview</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              {(filter.range === '7days' || filter.range === '30days') ? 'Daily' : 'Monthly'} revenue vs profit
+            </p>
           </div>
           <div className="h-[350px] w-full">
             {isChartLoading ? (

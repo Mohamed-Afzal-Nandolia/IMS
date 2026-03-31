@@ -35,7 +35,7 @@ export default function DashboardPage() {
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
 
-  const { data: stats, isLoading } = useDashboardStats(range);
+  const { data: stats, isLoading } = useDashboardStats({ range });
 
   if (!isMounted || (isLoading && !stats)) {
     return (
